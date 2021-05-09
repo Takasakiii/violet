@@ -1,0 +1,19 @@
+version: "3"
+volumes: 
+    violetDb:
+
+networks: 
+    violetNet:
+        driver: bridge
+
+services: 
+    db:
+        image: mariadb:10.3
+        env_file: './database.env'
+        ports: 
+            - 3306:3306
+        networks: 
+            - violetNet
+        volumes: 
+            - 'violetDb:/var/lib/mysql'
+        container_name: violet-mysql
