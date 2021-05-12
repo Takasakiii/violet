@@ -10,3 +10,8 @@ pub fn get_discord_token() -> String {
     env::var("VIOLET_DISCORD_TOKEN")
         .expect("Esperado `VIOLET_DISCORD_TOKEN` nas enviroments")
 }
+
+pub fn get_bot_prefix() -> String {
+    env::var("VIOLET_BOT_PREFIX")
+        .unwrap_or("v.".into())
+}

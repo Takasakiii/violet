@@ -1,6 +1,7 @@
 mod events;
+mod commands;
 
-use serenity::{Client, framework::StandardFramework};
+use serenity::Client;
 use crate::config;
 
 pub fn start() {
@@ -14,7 +15,7 @@ pub fn start() {
 async fn start_bot() -> Result<(), serenity::Error> {
     let mut client = Client::builder(config::get_discord_token())
         .event_handler(events::Handler)
-        .framework(StandardFramework::new())
+        .framework(commands::get_framework())
         .await?;
 
     client
