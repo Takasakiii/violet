@@ -1,8 +1,10 @@
 use std::time::Duration;
 
+use mysql::serde_json::json;
+use regex::Regex;
 use serenity::{builder::CreateEmbed, client::Context, framework::standard::{CommandResult, macros::{command, group}}, model::channel::Message};
 
-use crate::{config, consts::colors};
+use crate::{config, consts::colors, mysql_db};
 
 #[group("Rastreador de Eventos 🖥️")]
 #[commands(registrar_aplicacao)]
@@ -46,12 +48,32 @@ async fn registrar_aplicacao(ctx: &Context, msg: &Message) -> CommandResult {
                 return Ok(());
             }
 
+            let webhook_url_final;
+
             if webhook.content.starts_with("create ") {
-                let slited_webhook = webhook.content
-                    .split(" ")
-                    .skip(1)
-                    .collect::<Vec<&str>>()
-                    .join(" ");
+                let regex = Regex::new(r"<#(\d{18})>")?;
+                let mut iter = regex.captures_iter(&webhook.content);
+                if let Some(cap_channel) = &iter.next() {
+                    let channel = &cap_channel[1];
+                    let channel = channel.parse::<u64>()?;
+                    let webhook_obj = ctx.http
+                        .create_webhook(channel, &json!({"name": format!("{} alerts!", &app_name.content)}))
+                        .await?;
+                    let webhook_url = webhook_obj.url()?;
+                    webhook_url_final = webhook_url;
+                } else {
+                    return Ok(());
+                }
+            } else {
+                webhook_url_final = webhook.content.clone();
+            }
+
+            let table = mysql_db::AppTable::insert(&app_name.content, msg.author.id.0, &webhook_url_final);
+            match table {
+                Err(why) => return Err(why),
+                Ok(app) => {
+                    println!("{}", app.id)
+                }
             }
         }
     }

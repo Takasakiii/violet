@@ -2,6 +2,7 @@ mod webserver;
 mod discordbot;
 pub mod config;
 pub mod consts;
+pub mod tokens;
 mod mysql_db;
 
 use dotenv::dotenv;

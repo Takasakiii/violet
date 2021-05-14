@@ -14,3 +14,7 @@ dotenv = "^0.15.0"
 tokio = {version = "^1.5.0", features = ["macros", "rt-multi-thread"]}
 serenity = {version = "^0.10.5", features = ["collector"]}
 env_logger = "^0.8.3"
+regex = "^1.5.4"
+jwt = "^0.13.0"
+hmac = "0.10.1"
+sha2 = "^0.9.5"

@@ -15,3 +15,8 @@ pub fn get_bot_prefix() -> String {
     env::var("VIOLET_BOT_PREFIX")
         .unwrap_or("v.".into())
 }
+
+pub fn get_jwt_secret() -> String {
+    env::var("VIOLET_JWT_SECRET")
+        .expect("Esperado `VIOLET_JWT_SECRET` nas enviroments")
+}
