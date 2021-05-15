@@ -14,9 +14,12 @@ pub fn get_framework() -> StandardFramework {
 
 
 #[hook]
-async fn after_hook(_: &Context, _: &Message, cmd_name: &str, cmd_result: CommandResult) {
+async fn after_hook(ctx: &Context, msg: &Message, cmd_name: &str, cmd_result: CommandResult) {
     if let Err(why) = cmd_result {
         println!("Ocorreu um erro no {}: {:?}", &cmd_name, &why);
+        msg.react(ctx, '❌')
+            .await
+            .ok();
     }
 }
 

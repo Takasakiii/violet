@@ -1,8 +1,9 @@
 use std::time::Duration;
 
+
 use mysql::serde_json::json;
 use regex::Regex;
-use serenity::{builder::CreateEmbed, client::Context, framework::standard::{CommandResult, macros::{command, group}}, model::channel::Message};
+use serenity::{builder::CreateEmbed, client::Context, framework::standard::{CommandResult, macros::{command, group}}, model::channel::Message, utils::Color};
 
 use crate::{config, consts::colors, mysql_db};
 
@@ -72,12 +73,60 @@ async fn registrar_aplicacao(ctx: &Context, msg: &Message) -> CommandResult {
             match table {
                 Err(why) => return Err(why),
                 Ok(app) => {
-                    println!("{}", app.id)
+                    let mut token_embed = common_embed;
+                    token_embed
+                        .description("Sua aplicação foi cadastrada com sucesso, abaixo as informações sobre seu cadastro:")
+                        .field("Identificador:", app.id, true)
+                        .field("Nome da Aplicação:", &app.name, true)
+                        .field("Token da Aplicação:", format!("||{}||", &app.token_app), false);
+
+
+                    loop_send_dm(&token_embed, ctx, msg)
+                        .await?;
+
+                    msg.channel_id.send_message(ctx, |f| f
+                        .embed(|e| e
+                            .color(Color::DARK_GREEN)
+                            .description("Aplicação cadastrada com sucesso.\n\nDados especiais foram mandado para seu DM.")
+                        )
+                    )
+                        .await?;
                 }
             }
         }
     }
 
+    Ok(())
+}
 
+
+async fn loop_send_dm(token_embed: &CreateEmbed, ctx: &Context, msg: &Message) -> CommandResult {
+    loop {
+        if send_dm_message_done(token_embed, ctx, msg).await.is_ok() {
+            return Ok(());
+        }
+
+        let msg_err = msg.channel_id.send_message(ctx, |f| f
+            .embed(|e| e
+                .color(Color::RED)
+                .description("Sua dm esta bloqueada, favor libere sua dm e pressione o ✅ abaixo.")
+            )
+        )
+            .await?;
+        msg_err.react(ctx, '✅')
+            .await?;
+        &msg.author.await_reaction(ctx)
+            .await;
+    }
+}
+
+async fn send_dm_message_done(token_embed: &CreateEmbed, ctx: &Context, msg: &Message) -> CommandResult {
+    msg.author
+        .create_dm_channel(ctx)
+        .await?
+        .send_message(ctx, |f| f
+            .set_embed(token_embed.clone())
+        )
+        .await?;
     Ok(())
 }

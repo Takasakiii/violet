@@ -1,5 +1,6 @@
 use std::collections::BTreeMap;
 
+use chrono::Utc;
 use hmac::{Hmac, NewMac, crypto_mac::InvalidKeyLength};
 use jwt::{SignWithKey, VerifyWithKey};
 use sha2::Sha256;
@@ -31,6 +32,9 @@ impl Tokens {
     pub fn generate_token(&self, id_user: u64) -> Result<String, jwt::Error> {
         let mut clains = BTreeMap::new();
         clains.insert("id", id_user);
+        let now = Utc::now();
+        let now_timestamp = now.timestamp();
+        clains.insert("created", now_timestamp as u64);
         let token_str = clains.sign_with_key(&self.secret)?;
         Ok(token_str)
     }
