@@ -1,12 +1,20 @@
 use serenity::{async_trait, client::{Context, EventHandler}, model::{channel::Message, prelude::Ready}};
-use crate::{config, consts::colors};
+use crate::{channels::GerChannels, config, consts::colors, webserver::dtos::EventTrackerReceive};
 
 pub struct Handler;
 
 #[async_trait]
 impl EventHandler for Handler {
     async fn ready(&self, _ctx: Context, data_about_bot: Ready) {
-        println!("Violet está conectada ao discord como: {}", data_about_bot.user.tag())
+        println!("Violet está conectada ao discord como: {}", data_about_bot.user.tag());
+
+        tokio::spawn(async {
+            GerChannels::get(|g| {
+                g.get_channel("send_app_event", |c| {
+                    println!("Debug: {:?}", c.get_data::<EventTrackerReceive>())
+                }).unwrap();
+            });
+        });
     }
 
     async fn message(&self, ctx: Context, msg: Message) {

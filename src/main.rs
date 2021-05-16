@@ -4,6 +4,7 @@ pub mod config;
 pub mod consts;
 pub mod tokens;
 mod mysql_db;
+pub mod channels;
 
 use dotenv::dotenv;
 
@@ -11,6 +12,11 @@ use dotenv::dotenv;
 async fn main() {
     dotenv()
         .ok();
+
+    channels::GerChannels::get(|g| {
+        g.create_channel("send_app_event");
+    });
+
     std::env::set_var("RUST_LOG", "actix_web=info");
     env_logger::init();
 
