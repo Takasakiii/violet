@@ -8,9 +8,10 @@ pub struct Channel {
 }
 
 impl Channel {
-    pub fn send_data(&self, any_data: impl Any) -> Result<(), mpsc::SendError<Box<dyn Any>>> {
+    pub fn send_data(&self, any_data: impl Any) -> Result<(), crate::GenericError> {
         let boxed_any = Box::new(any_data);
-        self.sender.send(boxed_any)?;
+        self.sender.send(boxed_any)
+            .or_else(|e| Err(format!("{:?}", e)));
         Ok(())
     }
 
@@ -32,9 +33,9 @@ pub struct GerChannels {
 }
 
 impl GerChannels {
-    pub fn get<F>(mut action: F)
+    pub fn get<F>(mut action: F) -> Result<(), crate::GenericError>
     where
-        F: FnMut(&mut GerChannels)
+        F: FnMut(&mut GerChannels) -> Result<(), crate::GenericError>
     {
         unsafe {
             if GEN_CHANNEL.is_none() {
@@ -46,7 +47,8 @@ impl GerChannels {
             let channel = GEN_CHANNEL
                 .as_mut()
                 .unwrap();
-            action(channel);
+            action(channel)?;
+            Ok(())
         }
     }
 
@@ -59,9 +61,9 @@ impl GerChannels {
         self.data.insert(channel_name.into(), channel);
     }
 
-    pub fn get_channel<F>(&self, channel_name: &str, mut callback: F) -> Result<(), String>
+    pub fn get_channel<F>(&self, channel_name: &str, mut callback: F) -> Result<(), crate::GenericError>
     where
-        F: FnMut(&Channel)
+        F: FnMut(&Channel) -> Result<(), crate::GenericError>
     {
         let channel = self.data.get(channel_name);
         match channel {
