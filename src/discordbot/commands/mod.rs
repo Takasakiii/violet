@@ -27,7 +27,7 @@ async fn after_hook(ctx: &Context, msg: &Message, cmd_name: &str, cmd_result: Co
 async fn help(ctx: &Context, msg: &Message, args: Args, _help_options: &'static HelpOptions, groups: &[&'static CommandGroup], _owners: HashSet<UserId>) -> CommandResult{
     let mut embed_send = CreateEmbed::default();
     embed_send.color(colors::VIOLET);
-    if args.len() == 0 {
+    if args.is_empty() {
         embed_send.title("**Meus comandos:**")
             .description(format!("Sou Violet estou aqui para ajudar meus criadores e até mesmo você com logs e reports de bugs nas aplicações.\n\nMeu prefixo é: `{}`, e abaixo você pode encontrar a lista de meus comandos:", config::get_bot_prefix()))
             .field("Ajuda ⁉:", format!("`{}help`", config::get_bot_prefix()), false);

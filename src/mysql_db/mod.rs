@@ -1,6 +1,8 @@
 mod app_table;
+mod reports_table;
 
 pub use app_table::AppTable;
+
 
 use mysql::{Pool, PooledConn, prelude::Queryable};
 use crate::config;

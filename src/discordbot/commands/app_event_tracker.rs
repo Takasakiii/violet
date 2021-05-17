@@ -11,7 +11,6 @@ use crate::{config, consts::colors, mysql_db};
 #[commands(registrar_aplicacao)]
 pub struct AppEventTracker;
 
-
 #[command("regapp")]
 #[aliases("addapp")]
 async fn registrar_aplicacao(ctx: &Context, msg: &Message) -> CommandResult {
@@ -69,7 +68,9 @@ async fn registrar_aplicacao(ctx: &Context, msg: &Message) -> CommandResult {
                 webhook_url_final = webhook.content.clone();
             }
 
+
             let table = mysql_db::AppTable::insert(&app_name.content, msg.author.id.0, &webhook_url_final);
+
             match table {
                 Err(why) => return Err(why),
                 Ok(app) => {
@@ -81,16 +82,21 @@ async fn registrar_aplicacao(ctx: &Context, msg: &Message) -> CommandResult {
                         .field("Token da Aplicação:", format!("||{}||", &app.token_app), false);
 
 
-                    loop_send_dm(&token_embed, ctx, msg)
-                        .await?;
+                    let result = loop_send_dm(&token_embed, ctx, msg)
+                        .await;
 
-                    msg.channel_id.send_message(ctx, |f| f
-                        .embed(|e| e
-                            .color(Color::DARK_GREEN)
-                            .description("Aplicação cadastrada com sucesso.\n\nDados especiais foram mandado para seu DM.")
-                        )
-                    )
-                        .await?;
+                    match result {
+                        Ok(_) => {
+                            msg.channel_id.send_message(ctx, |f| f
+                                .embed(|e| e
+                                    .color(Color::DARK_GREEN)
+                                    .description("Aplicação cadastrada com sucesso.\n\nDados especiais foram mandado para seu DM.")
+                                )
+                            )
+                                .await?;
+                        },
+                        Err(why) => return Err(why)
+                    }
                 }
             }
         }
@@ -115,7 +121,7 @@ async fn loop_send_dm(token_embed: &CreateEmbed, ctx: &Context, msg: &Message) -
             .await?;
         msg_err.react(ctx, '✅')
             .await?;
-        &msg.author.await_reaction(ctx)
+        msg.author.await_reaction(ctx)
             .await;
     }
 }
@@ -130,3 +136,4 @@ async fn send_dm_message_done(token_embed: &CreateEmbed, ctx: &Context, msg: &Me
         .await?;
     Ok(())
 }
+

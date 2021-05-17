@@ -2,7 +2,6 @@ pub mod dtos;
 
 use std::io::Result;
 use actix_web::{App, HttpResponse, HttpServer, middleware, post, web};
-use serenity::http::Http;
 
 use crate::channels::GerChannels;
 

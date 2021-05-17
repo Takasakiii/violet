@@ -8,6 +8,8 @@ pub mod channels;
 
 use dotenv::dotenv;
 
+pub type GenericError = Box<dyn std::error::Error + Send + Sync>;
+
 #[tokio::main]
 async fn main() {
     dotenv()

@@ -11,7 +11,7 @@ pub struct AppTable {
 }
 
 impl AppTable {
-    pub fn insert(name: &String, id_user: u64, webhook_url: &String) -> Result<Self, serenity::framework::standard::CommandError> {
+    pub fn insert(name: &str, id_user: u64, webhook_url: &str) -> Result<Self, crate::GenericError> {
         let token_builder = match Tokens::new() {
             Ok(token_builder) => token_builder,
             Err(why) => return Err(format!("{:?}", why).into())
@@ -32,12 +32,22 @@ impl AppTable {
         let id = conn.last_insert_id();
         let result = Self {
             id,
-            name: name.clone(),
+            name: name.into(),
             id_user,
             token_app: token,
-            webhook_url: webhook_url.clone()
+            webhook_url: webhook_url.into()
         };
 
         Ok(result)
     }
+
+    // pub fn get(id: u64) -> Result<(), mysql::Error> {
+    //     let conn = super::get_connection()?;
+    //     let selected_item = conn
+    //         .exec_first("select * from Apps where id_app = :id", params! {
+    //             id
+    //         })? as Option<Self>;
+
+    //     Ok(())
+    // }
 }

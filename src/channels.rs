@@ -34,7 +34,7 @@ pub struct GerChannels {
 impl GerChannels {
     pub fn get<F>(mut action: F)
     where
-        F: FnMut(&mut GerChannels) -> ()
+        F: FnMut(&mut GerChannels)
     {
         unsafe {
             if GEN_CHANNEL.is_none() {
@@ -43,9 +43,10 @@ impl GerChannels {
                 };
                 GEN_CHANNEL = Some(genchannel);
             }
-            if let Some(channel) = &mut GEN_CHANNEL {
-                action(channel);
-            }
+            let channel = GEN_CHANNEL
+                .as_mut()
+                .unwrap();
+            action(channel);
         }
     }
 
@@ -60,9 +61,9 @@ impl GerChannels {
 
     pub fn get_channel<F>(&self, channel_name: &str, mut callback: F) -> Result<(), String>
     where
-        F: FnMut(&Channel) -> ()
+        F: FnMut(&Channel)
     {
-        let channel = self.data.get(channel_name.into());
+        let channel = self.data.get(channel_name);
         match channel {
             Some(channel) => {
                 callback(channel);
