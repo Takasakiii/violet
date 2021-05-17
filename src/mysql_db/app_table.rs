@@ -1,4 +1,4 @@
-use mysql::{params, prelude::Queryable};
+use mysql::{FromRowError, Row, params, prelude::{FromRow, Queryable}};
 
 use crate::tokens::Tokens;
 
@@ -8,6 +8,36 @@ pub struct AppTable {
     pub id_user: u64,
     pub token_app: String,
     pub webhook_url: String
+}
+
+impl FromRow for AppTable {
+    fn from_row(mut row: Row) -> Self
+    where
+        Self: Sized
+    {
+        Self {
+            id: row.take("id_app").unwrap(),
+            name: row.take("name_app").unwrap(),
+            id_user: row.take("id_user").unwrap(),
+            token_app: row.take("token_app").unwrap(),
+            webhook_url: row.take("webhook_url_app").unwrap()
+        }
+    }
+
+    fn from_row_opt(mut row: Row) -> Result<Self, FromRowError>
+    where
+        Self: Sized
+    {
+        let apptable = Self {
+            id: row.take("id_app").unwrap(),
+            name: row.take("name_app").unwrap(),
+            id_user: row.take("id_user").unwrap(),
+            token_app: row.take("token_app").unwrap(),
+            webhook_url: row.take("webhook_url_app").unwrap()
+        };
+
+        Ok(apptable)
+    }
 }
 
 impl AppTable {
@@ -41,13 +71,16 @@ impl AppTable {
         Ok(result)
     }
 
-    // pub fn get(id: u64) -> Result<(), mysql::Error> {
-    //     let conn = super::get_connection()?;
-    //     let selected_item = conn
-    //         .exec_first("select * from Apps where id_app = :id", params! {
-    //             id
-    //         })? as Option<Self>;
+    pub fn get(id: u64) -> Option<Self> {
+        let mut conn = super::get_connection()
+            .ok()?;
 
-    //     Ok(())
-    // }
+        let selected_item = conn
+            .exec_first("select * from Apps where id_app = :id", params! {
+                id
+            })
+            .ok()
+            .unwrap_or(None) as Option<Self>;
+        selected_item
+    }
 }
