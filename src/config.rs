@@ -13,7 +13,7 @@ pub fn get_discord_token() -> String {
 
 pub fn get_bot_prefix() -> String {
     env::var("VIOLET_BOT_PREFIX")
-        .unwrap_or("v.".into())
+        .unwrap_or_else(|_| "v.".into())
 }
 
 pub fn get_jwt_secret() -> String {
