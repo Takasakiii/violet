@@ -1,5 +1,6 @@
+use isahc::{ReadResponseExt, RequestExt};
 use serenity::{async_trait, client::{Context, EventHandler}, model::{channel::Message, prelude::Ready}};
-use crate::{config, consts::colors};
+use crate::{channels::GerChannels, config, consts::{self, colors}};
 
 pub struct Handler;
 
@@ -9,11 +10,68 @@ impl EventHandler for Handler {
         println!("Violet está conectada ao discord como: {}", data_about_bot.user.tag());
 
         tokio::spawn(async {
-            // GerChannels::get(|g| {
-            //     g.get_channel("send_app_event", |c| {
-            //         println!("Debug: {:?}", c.get_data::<EventTrackerReceive>())
-            //     }).unwrap();
-            // });
+            let result = GerChannels::get(|g| {
+                g.get_channel("send_app_event", |c| {
+                    let data = c.get_data::<(crate::mysql_db::AppTable, crate::webserver::dtos::EventTrackerReceive)>()
+                        .ok_or("Problemas ao obter os dados do canal")?;
+
+                    let (app, event) = (data.0, data.1);
+
+                    let severity: String = event.severity.into();
+
+                    let stacktrace = if event.stacktrace.is_some() && event.stacktrace.as_ref().unwrap().len() > 1018 {
+                        format!("{}...", &event.stacktrace.unwrap()[..1015])
+                    } else {
+                        event.stacktrace
+                            .unwrap()
+                    };
+
+                    let json = format!(r#"
+                        {{
+                            "embeds": [
+
+                                {{
+                                    "author": {{
+                                        "name": "{}"
+                                    }},
+                                    "title": "{}: {}",
+                                    "description": "```{}```",
+                                    "color": {},
+                                    "fields": [
+                                        {{
+                                            "name": "Stacktrace:",
+                                            "value": "```{}```",
+                                            "inline": true
+                                        }}
+                                    ]
+                                }}
+                            ]
+                        }}
+                    "#,
+                        app.name,
+                        severity,
+                        event.title,
+                        event.message,
+                        consts::colors::VIOLET,
+                        stacktrace
+                    );
+
+                    let mut response = isahc::Request::post(app.webhook_url)
+                        .header("Content-Type", "application/json")
+                        .body(json)?
+                        .send()?;
+
+                    if response.status().ne(&200) {
+                        println!("{}", response.text()?)
+                    }
+
+                    Ok(())
+                })
+            });
+
+            if let Err(why) = result {
+                println!("{:?}", why);
+            }
         });
     }
 

@@ -25,13 +25,19 @@ impl From<Severity> for u8 {
     }
 }
 
+impl From<Severity> for String {
+    fn from(val: Severity) -> Self {
+        format!("{:?}", val)
+    }
+}
+
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct EventTrackerReceive {
     pub app_id: Option<u64>,
     pub severity: Severity,
     pub title: String,
     pub message: String,
-    pub stacktrace: Option<String>,
+    pub stacktrace: Option<String>
 }
 
 #[derive(Serialize)]

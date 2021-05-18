@@ -56,7 +56,7 @@ where
 
     GerChannels::get(|g| {
         g.get_channel("send_app_event", |c| {
-            c.send_data(content.clone())
+            c.send_data((app_data_finded.clone(), content.clone()))
         })
     })?;
 
