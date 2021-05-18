@@ -31,7 +31,6 @@ async fn get_event_from_app(path: web::Path<(u64,)>, content: web::Json<dtos::Ev
         result = HttpResponse::Created()
             .json(data);
     }) {
-        println!("err: {:?}", why);
         result = HttpResponse::BadRequest()
             .json(dtos::ErrPayload{
                 message: format!("{:?}", why)
