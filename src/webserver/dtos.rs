@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
+use serenity::utils::Color;
 
 #[derive(Deserialize_repr, Serialize_repr, Debug, Clone, Copy)]
 #[repr(u8)]
@@ -11,6 +12,20 @@ pub enum Severity {
     Info = 4,
     Verbose = 5
 }
+
+impl From<Severity> for Color {
+    fn from(s: Severity) -> Self {
+        match s {
+            Severity::NoDefined => Color::LIGHTER_GREY,
+            Severity::Severe => Color::from_rgb(0, 0, 0),
+            Severity::Error => Color::RED,
+            Severity::Warning => Color::GOLD,
+            Severity::Info => Color::BLUE,
+            Severity::Verbose => Color::from_rgb(0, 255, 0)
+        }
+    }
+}
+
 
 impl From<Severity> for u8 {
     fn from(val: Severity) -> Self {

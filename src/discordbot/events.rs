@@ -1,6 +1,8 @@
+use std::thread;
+
 use isahc::{ReadResponseExt, RequestExt};
-use serenity::{async_trait, client::{Context, EventHandler}, model::{channel::Message, prelude::Ready}};
-use crate::{channels::GerChannels, config, consts::{self, colors}};
+use serenity::{async_trait, client::{Context, EventHandler}, model::{channel::Message, prelude::Ready}, utils::Color};
+use crate::{channels::GerChannels, config, consts::colors};
 
 pub struct Handler;
 
@@ -9,68 +11,70 @@ impl EventHandler for Handler {
     async fn ready(&self, _ctx: Context, data_about_bot: Ready) {
         println!("Violet está conectada ao discord como: {}", data_about_bot.user.tag());
 
-        tokio::spawn(async {
-            let result = GerChannels::get(|g| {
-                g.get_channel("send_app_event", |c| {
-                    let data = c.get_data::<(crate::mysql_db::AppTable, crate::webserver::dtos::EventTrackerReceive)>()
-                        .ok_or("Problemas ao obter os dados do canal")?;
+        thread::spawn(|| {
+            loop {
+                let result = GerChannels::get(|g| {
+                    g.get_channel("send_app_event", |c| {
+                        let data = c.get_data::<(crate::mysql_db::AppTable, crate::webserver::dtos::EventTrackerReceive)>()
+                            .ok_or("Problemas ao obter os dados do canal")?;
 
-                    let (app, event) = (data.0, data.1);
+                        let (app, event) = (data.0, data.1);
 
-                    let severity: String = event.severity.into();
+                        let severity: String = event.severity.into();
 
-                    let stacktrace = if event.stacktrace.is_some() && event.stacktrace.as_ref().unwrap().len() > 1018 {
-                        format!("{}...", &event.stacktrace.unwrap()[..1015])
-                    } else {
-                        event.stacktrace
-                            .unwrap()
-                    };
+                        let stacktrace = if event.stacktrace.is_some() && event.stacktrace.as_ref().unwrap().len() > 1018 {
+                            format!("{}...", &event.stacktrace.unwrap()[..1015])
+                        } else {
+                            event.stacktrace
+                                .unwrap()
+                        };
 
-                    let json = format!(r#"
-                        {{
-                            "embeds": [
+                        let json = format!(r#"
+                            {{
+                                "embeds": [
 
-                                {{
-                                    "author": {{
-                                        "name": "{}"
-                                    }},
-                                    "title": "{}: {}",
-                                    "description": "```{}```",
-                                    "color": {},
-                                    "fields": [
-                                        {{
-                                            "name": "Stacktrace:",
-                                            "value": "```{}```",
-                                            "inline": true
-                                        }}
-                                    ]
-                                }}
-                            ]
-                        }}
-                    "#,
-                        app.name,
-                        severity,
-                        event.title,
-                        event.message,
-                        consts::colors::VIOLET,
-                        stacktrace
-                    );
+                                    {{
+                                        "author": {{
+                                            "name": "{}"
+                                        }},
+                                        "title": "{}: {}",
+                                        "description": "```{}```",
+                                        "color": {},
+                                        "fields": [
+                                            {{
+                                                "name": "Stacktrace:",
+                                                "value": "```{}```",
+                                                "inline": true
+                                            }}
+                                        ]
+                                    }}
+                                ]
+                            }}
+                        "#,
+                            app.name,
+                            severity,
+                            event.title,
+                            event.message,
+                            Color::from(event.severity).0,
+                            stacktrace
+                        );
 
-                    let mut response = isahc::Request::post(app.webhook_url)
-                        .header("Content-Type", "application/json")
-                        .body(json)?
-                        .send()?;
+                        let mut response = isahc::Request::post(app.webhook_url)
+                            .header("Content-Type", "application/json")
+                            .body(json)?
+                            .send()?;
 
-                    if response.status().ne(&200) {
-                        println!("{}", response.text()?)
-                    }
+                        if response.status().ne(&200) {
+                            println!("{}", response.text()?)
+                        }
 
-                    Ok(())
-                })
-            });
+                        Ok(())
+                    })
+                });
 
-            if let Err(why) = result {
-                println!("{:?}", why);
+                if let Err(why) = result {
+                    println!("{:?}", why);
+                }
             }
         });
     }
