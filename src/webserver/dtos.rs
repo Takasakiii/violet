@@ -42,7 +42,14 @@ impl From<Severity> for u8 {
 
 impl From<Severity> for String {
     fn from(val: Severity) -> Self {
-        format!("{:?}", val)
+        match val {
+            Severity::NoDefined => "Não definido".into(),
+            Severity::Severe => "Erro Severo".into(),
+            Severity::Error => "Erro".into(),
+            Severity::Warning => "Aviso".into(),
+            Severity::Info => "Informação".into(),
+            Severity::Verbose => "Dado de depuração".into()
+        }
     }
 }
 
