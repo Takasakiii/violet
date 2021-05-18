@@ -12,6 +12,19 @@ pub enum Severity {
     Verbose = 5
 }
 
+impl Into<u8> for Severity {
+    fn into(self) -> u8 {
+        match self {
+            Self::NoDefined => 0,
+            Self::Severe => 1,
+            Self::Error => 2,
+            Self::Warning => 3,
+            Self::Info => 4,
+            Self::Verbose => 5
+        }
+    }
+}
+
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct EventTrackerReceive {
     pub app_id: Option<u64>,
@@ -19,4 +32,9 @@ pub struct EventTrackerReceive {
     pub title: String,
     pub message: String,
     pub stacktrace: Option<String>,
+}
+
+#[derive(Serialize)]
+pub struct ErrPayload {
+    pub message: String
 }
