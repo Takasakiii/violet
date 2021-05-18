@@ -2,7 +2,7 @@ mod app_table;
 mod reports_table;
 
 pub use app_table::AppTable;
-
+pub use reports_table::ReportsTable;
 
 use mysql::{Pool, PooledConn, prelude::Queryable};
 use crate::config;
