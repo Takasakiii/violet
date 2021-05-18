@@ -12,15 +12,15 @@ pub enum Severity {
     Verbose = 5
 }
 
-impl Into<u8> for Severity {
-    fn into(self) -> u8 {
-        match self {
-            Self::NoDefined => 0,
-            Self::Severe => 1,
-            Self::Error => 2,
-            Self::Warning => 3,
-            Self::Info => 4,
-            Self::Verbose => 5
+impl From<Severity> for u8 {
+    fn from(val: Severity) -> Self {
+        match val {
+            Severity::NoDefined => 0,
+            Severity::Severe => 1,
+            Severity::Error => 2,
+            Severity::Warning => 3,
+            Severity::Info => 4,
+            Severity::Verbose => 5
         }
     }
 }

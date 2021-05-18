@@ -16,7 +16,7 @@ pub struct ReportsTable<'a> {
 
 
 impl<'a> ReportsTable<'a> {
-    pub fn insert(severity: u8, title: &'a String, message: &'a String, stacktrace: &'a Option<String>, app_id: u64) -> Result<Self, crate::GenericError> {
+    pub fn insert(severity: u8, title: &'a str, message: &'a str, stacktrace: &'a Option<String>, app_id: u64) -> Result<Self, crate::GenericError> {
         let mut conn = super::get_connection()?;
         let timestamp = Utc::now()
             .timestamp();
@@ -36,6 +36,7 @@ impl<'a> ReportsTable<'a> {
             .last_insert_id();
 
         let stacktrace = stacktrace
+            .as_ref()
             .map(|e| &e[..]);
 
         let report = Self {

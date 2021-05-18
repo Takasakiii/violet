@@ -11,7 +11,7 @@ impl Channel {
     pub fn send_data(&self, any_data: impl Any) -> Result<(), crate::GenericError> {
         let boxed_any = Box::new(any_data);
         self.sender.send(boxed_any)
-            .or_else(|e| Err(format!("{:?}", e)));
+            .map_err(|e| format!("{:?}", e))?;
         Ok(())
     }
 
@@ -68,7 +68,7 @@ impl GerChannels {
         let channel = self.data.get(channel_name);
         match channel {
             Some(channel) => {
-                callback(channel);
+                callback(channel)?;
             },
             None => return Err("Canal não existe.".into())
         }

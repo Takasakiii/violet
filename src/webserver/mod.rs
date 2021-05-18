@@ -1,10 +1,7 @@
 pub mod dtos;
+use actix_web::{App, HttpRequest, HttpResponse, HttpServer, middleware, post, web};
 
-use std::io::Result;
-use actix_web::{App, HttpResponse, HttpServer, middleware, post, web};
-
-use crate::channels::GerChannels;
-
+use crate::{channels::GerChannels, mysql_db::{AppTable, ReportsTable}};
 
 
 #[actix_web::main]
@@ -14,7 +11,7 @@ pub async fn start_web_server() {
         .expect("Não foi possivel ligar o servidor web.");
 }
 
-async fn actix_start() -> Result<()> {
+async fn actix_start() -> std::io::Result<()> {
     HttpServer::new(|| {
         App::new()
             .wrap(middleware::Logger::default())
@@ -25,28 +22,57 @@ async fn actix_start() -> Result<()> {
         .await
 }
 
-#[post("/api/app/{id_app}/events")]
-async fn get_event_from_app(path: web::Path<(u64,)>, content: web::Json<dtos::EventTrackerReceive>) -> HttpResponse {
-    let mut content = content.0;
-    let mut ret = HttpResponse::Ok().finish();
-    content.app_id = Some(path.0.0);
-    GerChannels::get(|g|{
-        let result = g.get_channel("send_app_event", |c|{
+#[post("/api/apps/{id_app}/events")]
+async fn get_event_from_app(path: web::Path<(u64,)>, content: web::Json<dtos::EventTrackerReceive>, req: HttpRequest) -> HttpResponse {
+    let mut result = HttpResponse::InternalServerError()
+        .finish();
+
+    if let Err(why) =  event_handler(path, content, req, |data| {
+        result = HttpResponse::Created()
+            .json(data);
+    }) {
+        println!("err: {:?}", why);
+        result = HttpResponse::BadRequest()
+            .json(dtos::ErrPayload{
+                message: format!("{:?}", why)
+            });
+    }
+
+    result
+}
+
+fn event_handler<F>(path: web::Path<(u64,)>, content: web::Json<dtos::EventTrackerReceive>, req: HttpRequest, mut callback: F) -> Result<(), crate::GenericError>
+where
+    F: FnMut(ReportsTable)
+{
+    let token = get_token(&req)
+        .ok_or_else(|| "Problemas ao verificar o token".to_string())?;
+
+    let app_data_finded = AppTable::get(path.0.0)
+        .ok_or_else(|| "Aplicação não localizada.".to_string())?;
+
+    if app_data_finded.token_app.ne(&token) {
+        return Err("Token invalido para essa aplicação.".into());
+    }
+
+    GerChannels::get(|g| {
+        g.get_channel("send_app_event", |c| {
             c.send_data(content.clone())
-                .ok();
-        });
+        })
+    })?;
 
-        match result {
-            Ok(_) => {
-                ret = HttpResponse::Created()
-                    .json(content.clone());
-            },
-            Err(why) => {
-                ret = HttpResponse::BadGateway()
-                    .body(why);
-            }
-        }
+    let report = ReportsTable::insert(content.severity.into(), &content.title, &content.message, &content.stacktrace, app_data_finded.id)?;
+    callback(report);
 
-    });
-    ret
+    Ok(())
+}
+
+
+fn get_token (req: &HttpRequest) -> Option<String> {
+    req
+        .headers()
+        .get("Authorization")?
+        .to_str()
+        .ok()
+        .map(|e| e.to_string())
 }
