@@ -17,6 +17,14 @@ pub fn get_framework() -> StandardFramework {
 #[hook]
 async fn after_hook(ctx: &Context, msg: &Message, cmd_name: &str, cmd_result: CommandResult) {
     if let Err(why) = cmd_result {
+        msg.react(ctx, '❌')
+            .await
+            .ok();
+
+        if format!("{:?}", &why).eq("Eos") {
+            return;
+        }
+
         let now = Utc::now()
             .to_string();
         println!("[{}][Erro no bot]: {}: {:?}", now, cmd_name, &why);
@@ -48,12 +56,6 @@ async fn after_hook(ctx: &Context, msg: &Message, cmd_name: &str, cmd_result: Co
                 .await
                 .ok();
         }
-
-
-
-        msg.react(ctx, '❌')
-            .await
-            .ok();
     }
 }
 
