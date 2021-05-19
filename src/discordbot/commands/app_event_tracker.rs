@@ -13,6 +13,8 @@ pub struct AppEventTracker;
 
 #[command("regapp")]
 #[aliases("addapp")]
+#[description("Registra uma nova aplicação para receber o rastreamento de eventos.")]
+#[usage("")]
 async fn registrar_aplicacao(ctx: &Context, msg: &Message) -> CommandResult {
     let mut common_embed = CreateEmbed::default();
     common_embed.color(colors::VIOLET)
@@ -139,6 +141,8 @@ async fn send_dm_message_done(token_embed: &CreateEmbed, ctx: &Context, msg: &Me
 
 #[command("evlist")]
 #[aliases("listev", "lsev")]
+#[description("Lista os ultimos 25 eventos de uma aplicação.")]
+#[usage("{id da aplicação}")]
 async fn list_events(ctx: &Context, msg: &Message, mut args: Args) -> CommandResult {
     let id_app = args.single::<u64>()?;
     let elements = ReportsTable::get_last_25(id_app, msg.author.id.0)?;
@@ -164,6 +168,8 @@ async fn list_events(ctx: &Context, msg: &Message, mut args: Args) -> CommandRes
 
 #[command("evdet")]
 #[aliases("detev", "eventdetail")]
+#[description("Envia os detalhes sobre um evento em especifico.")]
+#[usage("{id do evento}")]
 async fn event_detail(ctx: &Context, msg: &Message, mut args: Args) -> CommandResult {
     let id_ev = args.single::<u64>()?;
     let element = ReportsTable::get(id_ev, msg.author.id.0);
