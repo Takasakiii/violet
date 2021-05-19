@@ -13,6 +13,19 @@ pub enum Severity {
     Verbose = 5
 }
 
+impl From<u8> for Severity {
+    fn from(el: u8) -> Self {
+        match el {
+            1 => Severity::Severe,
+            2 => Severity::Error,
+            3 => Severity::Warning,
+            4 => Severity::Info,
+            5 => Severity::Verbose,
+            _ => Severity::NoDefined
+        }
+    }
+}
+
 impl From<Severity> for Color {
     fn from(s: Severity) -> Self {
         match s {

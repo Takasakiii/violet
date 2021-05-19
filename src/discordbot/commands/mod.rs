@@ -34,7 +34,16 @@ async fn help(ctx: &Context, msg: &Message, args: Args, _help_options: &'static 
 
         for group in groups.iter() {
             let name_module = format!("{}:", group.name);
-            embed_send.field(name_module, "a", false);
+            let cmds = group.options.commands
+                .iter()
+                .map(|el| {
+                    el.options.names
+                        .first()
+                        .map(|el| el.to_string())
+                        .unwrap()
+                })
+                .fold("".to_string(), |ini, new| format!("{} `{}`", ini, new));
+            embed_send.field(name_module, cmds, false);
         }
     }
 

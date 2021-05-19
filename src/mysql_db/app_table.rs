@@ -25,17 +25,11 @@ impl FromRow for AppTable {
         }
     }
 
-    fn from_row_opt(mut row: Row) -> Result<Self, FromRowError>
+    fn from_row_opt(row: Row) -> Result<Self, FromRowError>
     where
         Self: Sized
     {
-        let apptable = Self {
-            id: row.take("id_app").unwrap(),
-            name: row.take("name_app").unwrap(),
-            id_user: row.take("id_user").unwrap(),
-            token_app: row.take("token_app").unwrap(),
-            webhook_url: row.take("webhook_url_app").unwrap()
-        };
+        let apptable = Self::from_row(row);
 
         Ok(apptable)
     }

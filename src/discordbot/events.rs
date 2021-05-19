@@ -2,7 +2,7 @@ use std::thread;
 
 use isahc::{ReadResponseExt, RequestExt};
 use serenity::{async_trait, client::{Context, EventHandler}, model::{channel::Message, prelude::Ready}, utils::Color};
-use crate::{channels::GerChannels, config, consts::colors};
+use crate::{channels::GerChannels, config, consts::colors, discordbot::helpers};
 
 pub struct Handler;
 
@@ -22,12 +22,7 @@ impl EventHandler for Handler {
 
                         let severity: String = event.severity.into();
 
-                        let stacktrace = if event.stacktrace.is_some() && event.stacktrace.as_ref().unwrap().len() > 1018 {
-                            format!("{}...", &event.stacktrace.unwrap()[..1015])
-                        } else {
-                            event.stacktrace
-                                .unwrap()
-                        };
+                        let stacktrace = helpers::SmallerString::from(event.stacktrace.as_ref().unwrap());
 
                         let json = format!(r#"
                             {{
@@ -56,7 +51,7 @@ impl EventHandler for Handler {
                             event.title,
                             event.message,
                             Color::from(event.severity).0,
-                            stacktrace
+                            String::from(stacktrace)
                         );
 
                         let mut response = isahc::Request::post(app.webhook_url)

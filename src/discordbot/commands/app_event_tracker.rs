@@ -3,12 +3,12 @@ use std::time::Duration;
 
 use mysql::serde_json::json;
 use regex::Regex;
-use serenity::{builder::CreateEmbed, client::Context, framework::standard::{CommandResult, macros::{command, group}}, model::channel::Message, utils::Color};
+use serenity::{builder::CreateEmbed, client::Context, framework::standard::{Args, CommandResult, macros::{command, group}}, model::channel::Message, utils::Color};
 
-use crate::{config, consts::colors, mysql_db};
+use crate::{config, consts::colors, discordbot::helpers::SmallerString, mysql_db::{self, ReportsTable}, webserver::dtos::Severity};
 
 #[group("Rastreador de Eventos 🖥️")]
-#[commands(registrar_aplicacao)]
+#[commands(registrar_aplicacao, list_events, event_detail)]
 pub struct AppEventTracker;
 
 #[command("regapp")]
@@ -134,6 +134,64 @@ async fn send_dm_message_done(token_embed: &CreateEmbed, ctx: &Context, msg: &Me
             .set_embed(token_embed.clone())
         )
         .await?;
+    Ok(())
+}
+
+#[command("evlist")]
+#[aliases("listev", "lsev")]
+async fn list_events(ctx: &Context, msg: &Message, mut args: Args) -> CommandResult {
+    let id_app = args.single::<u64>()?;
+    let elements = ReportsTable::get_last_25(id_app, msg.author.id.0)?;
+    let mut events_format = String::from("Não existem eventos para esse app.");
+    if !elements.is_empty() {
+        events_format = elements
+            .iter()
+            .fold("".to_string(), |old, new|  format!("{}\n{}: ({}): {}", old, new.id, String::from(Severity::from(new.severity)), &new.title));
+    }
+    msg.channel_id.send_message(ctx, |f| f
+        .embed(|e| e
+            .title("Ultimos 25 eventos:")
+            .description(format!("```{}```", events_format))
+            .footer(|f| f
+                .text(format!("Use {}evdet {{:id}} para ver informações sobre o evento.", config::get_bot_prefix()))
+            )
+            .color(colors::VIOLET)
+        )
+    )
+        .await?;
+    Ok(())
+}
+
+#[command("evdet")]
+#[aliases("detev", "eventdetail")]
+async fn event_detail(ctx: &Context, msg: &Message, mut args: Args) -> CommandResult {
+    let id_ev = args.single::<u64>()?;
+    let element = ReportsTable::get(id_ev, msg.author.id.0);
+    match element {
+        None => {
+            msg.channel_id
+                .send_message(ctx, |f| f
+                    .embed(|e| e
+                        .color(Color::RED)
+                        .description("Informação não encontrada.")
+                    )
+                )
+                .await?;
+        },
+        Some(report) => {
+            let severity = Severity::from(report.severity);
+            msg.channel_id
+                .send_message(ctx, |f| f
+                    .embed(|e| e
+                        .color(Color::from(severity))
+                        .title(format!("{}: {}", String::from(severity), &report.title))
+                        .description(format!("```{}```", &report.message))
+                        .field("Stacktrace:", String::from(SmallerString::from(report.stacktrace.as_ref().unwrap())), true)
+                    )
+                )
+                .await?;
+        }
+    }
     Ok(())
 }
 

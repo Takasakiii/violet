@@ -1,5 +1,6 @@
 mod events;
 mod commands;
+mod helpers;
 
 use serenity::Client;
 use crate::config;
