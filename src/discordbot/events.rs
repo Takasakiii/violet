@@ -2,7 +2,7 @@ use std::thread;
 
 use isahc::{ReadResponseExt, RequestExt};
 use serenity::{async_trait, client::{Context, EventHandler}, model::{channel::Message, prelude::Ready}, utils::Color};
-use crate::{channels::GerChannels, config, consts::colors, discordbot::helpers};
+use crate::{channels::GerChannels, config, consts::colors, discordbot::helpers::{self, AuthorEmbed, EmbedSerializer, FieldEmbed, WebhookEmbed}};
 
 pub struct Handler;
 
@@ -22,37 +22,23 @@ impl EventHandler for Handler {
 
                         let severity: String = event.severity.into();
 
-                        let stacktrace = helpers::SmallerString::from(event.stacktrace.as_ref().unwrap());
+                        let stacktrace = event.stacktrace.map(|stack| vec![FieldEmbed {
+                                name: "Stacktrace:".into(),
+                                value: helpers::reduce_to_field(&stack, 1018),
+                                inline: true
+                            }]);
 
-                        let json = format!(r#"
-                            {{
-                                "embeds": [
-
-                                    {{
-                                        "author": {{
-                                            "name": "{}"
-                                        }},
-                                        "title": "{}: {}",
-                                        "description": "```{}```",
-                                        "color": {},
-                                        "fields": [
-                                            {{
-                                                "name": "Stacktrace:",
-                                                "value": "```{}```",
-                                                "inline": true
-                                            }}
-                                        ]
-                                    }}
-                                ]
-                            }}
-                        "#,
-                            app.name,
-                            severity,
-                            event.title,
-                            event.message,
-                            Color::from(event.severity).0,
-                            String::from(stacktrace)
-                        );
+                        let json = serde_json::to_string(&WebhookEmbed {
+                            embeds: vec![EmbedSerializer {
+                                author: AuthorEmbed {
+                                    name: app.name
+                                },
+                                title: format!("{}: {}", &severity, helpers::reduce_to_field(&event.title, 200)),
+                                description: format!("```{}```", helpers::reduce_to_field(&event.message, 2000)),
+                                color: Color::from(event.severity).0,
+                                fields: stacktrace
+                            }]
+                        })?;
 
                         let mut response = isahc::Request::post(app.webhook_url)
                             .header("Content-Type", "application/json")

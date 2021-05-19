@@ -5,7 +5,7 @@ use mysql::serde_json::json;
 use regex::Regex;
 use serenity::{builder::CreateEmbed, client::Context, framework::standard::{Args, CommandResult, macros::{command, group}}, model::channel::Message, utils::Color};
 
-use crate::{config, consts::colors, discordbot::helpers::SmallerString, mysql_db::{self, ReportsTable}, webserver::dtos::Severity};
+use crate::{config, consts::colors, discordbot::helpers, mysql_db::{self, ReportsTable}, webserver::dtos::Severity};
 
 #[group("Rastreador de Eventos 🖥️")]
 #[commands(registrar_aplicacao, list_events, event_detail)]
@@ -188,12 +188,17 @@ async fn event_detail(ctx: &Context, msg: &Message, mut args: Args) -> CommandRe
             let severity = Severity::from(report.severity);
             msg.channel_id
                 .send_message(ctx, |f| f
-                    .embed(|e| e
-                        .color(Color::from(severity))
-                        .title(format!("{}: {}", String::from(severity), &report.title))
-                        .description(format!("```{}```", &report.message))
-                        .field("Stacktrace:", String::from(SmallerString::from(report.stacktrace.as_ref().unwrap())), true)
-                    )
+                    .embed(|e| {
+                        e
+                            .color(Color::from(severity))
+                            .title(format!("{}: {}", String::from(severity), helpers::reduce_to_field(&report.title, 200)))
+                            .description(format!("```{}```", &report.message));
+                        if let Some(stack) = report.stacktrace.as_ref() {
+                            e.field("Stacktrace:", format!("```{}```", helpers::reduce_to_field(stack, 1018)), false);
+                        }
+
+                        e
+                    })
                 )
                 .await?;
         }

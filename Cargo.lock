@@ -2866,6 +2866,7 @@ dependencies = [
  "mysql",
  "regex",
  "serde",
+ "serde_json",
  "serde_repr",
  "serenity",
  "sha2 0.9.5",
