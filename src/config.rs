@@ -20,3 +20,10 @@ pub fn get_jwt_secret() -> String {
     env::var("VIOLET_JWT_SECRET")
         .expect("Esperado `VIOLET_JWT_SECRET` nas enviroments")
 }
+
+pub fn get_bot_owner() -> u64 {
+    env::var("VIOLET_ID_OWNER")
+        .unwrap_or_else(|_| "274289097689006080".into())
+        .parse::<u64>()
+        .expect("O enviroment `VIOLET_ID_OWNER` não é um numero.")
+}

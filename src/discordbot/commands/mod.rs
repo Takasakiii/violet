@@ -1,6 +1,7 @@
 mod app_event_tracker;
 
 use std::collections::HashSet;
+use chrono::Utc;
 use serenity::{builder::CreateEmbed, client::Context, framework::{StandardFramework, standard::{Args, CommandGroup, CommandResult, HelpOptions, macros::{hook, help}}}, model::{channel::Message, id::UserId}, utils::Color};
 use crate::{config, consts::colors};
 
@@ -16,7 +17,40 @@ pub fn get_framework() -> StandardFramework {
 #[hook]
 async fn after_hook(ctx: &Context, msg: &Message, cmd_name: &str, cmd_result: CommandResult) {
     if let Err(why) = cmd_result {
-        println!("Ocorreu um erro no {}: {:?}", &cmd_name, &why);
+        let now = Utc::now()
+            .to_string();
+        println!("[{}][Erro no bot]: {}: {:?}", now, cmd_name, &why);
+
+
+        let owner_channel = ctx.http.get_user(config::get_bot_owner())
+            .await
+            .ok()
+            .map(|owner| {
+                async move {
+                    owner.create_dm_channel(ctx)
+                        .await
+                        .ok()
+                        .unwrap()
+
+                }
+            });
+
+        if let Some(channel_dm_owner) = owner_channel {
+            channel_dm_owner
+                .await
+                .send_message(ctx, |f| f
+                    .embed(|e| e
+                        .title("Ocorreu um erro desconhecido na **Violet**")
+                        .description(format!("```{}: {:?}```", cmd_name, &why))
+                        .color(Color::RED)
+                    )
+                )
+                .await
+                .ok();
+        }
+
+
+
         msg.react(ctx, '❌')
             .await
             .ok();
