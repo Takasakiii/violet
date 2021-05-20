@@ -83,7 +83,7 @@ fn send_event((app, event): ChannelType) -> Result<(), crate::GenericError> {
         .send()?;
 
     if response.status().ne(&200) {
-        println!("{}", response.text()?);
+        println!("Erro webhook: {}", response.text()?);
     }
 
     Ok(())
