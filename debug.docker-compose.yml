@@ -7,3 +7,5 @@ services:
         ports:
             - 127.0.0.1:3306:3306
         container_name: violet-mysql
+        environment:
+            MARIADB_DATABASE: violet
