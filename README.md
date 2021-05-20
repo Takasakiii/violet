@@ -17,7 +17,7 @@ Violet é um pequeno e simples monitorador de aplicação, voltado para receber 
  docker-compose up -d
  ```
 
-## Instalação sem Docker
+## Instalação sem Docker:
 
 ### Dependencias:
 - [Rust Compiler e Cargo](http://rustlang.org/)
