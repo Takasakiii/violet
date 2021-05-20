@@ -16,6 +16,7 @@ services:
         container_name: violet-mysql
         environment:
             MARIADB_DATABASE: violet
+            MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
 
     main:
         build:
@@ -27,5 +28,10 @@ services:
         container_name: violet-main
         depends_on:
             - db
+        environment:
+            VIOLET_MYSQL_CONN: ${VIOLET_MYSQL_CONN}
+            VIOLET_DISCORD_TOKEN: ${VIOLET_DISCORD_TOKEN}
+            VIOLET_JWT_SECRET: ${VIOLET_JWT_SECRET}
+            VIOLET_ID_OWNER: ${VIOLET_ID_OWNER}
         ports:
             - 127.0.0.1:3000:3000
