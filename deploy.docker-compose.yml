@@ -34,4 +34,4 @@ services:
             VIOLET_JWT_SECRET: ${VIOLET_JWT_SECRET}
             VIOLET_ID_OWNER: ${VIOLET_ID_OWNER}
         ports:
-            - 127.0.0.1:3000:3000
+            - 127.0.0.1:${VIOLET_ACTIX_PORT}:3000
