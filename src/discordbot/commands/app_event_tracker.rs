@@ -150,7 +150,7 @@ async fn list_events(ctx: &Context, msg: &Message, mut args: Args) -> CommandRes
     if !elements.is_empty() {
         events_format = elements
             .iter()
-            .fold("".to_string(), |old, new|  format!("{}\n{}: ({}): {}", old, new.id, String::from(Severity::from(new.severity)), &new.title));
+            .fold("".to_string(), |old, new|  format!("{}\n{}: ({}): {}", old, new.id, String::from(Severity::from(new.severity)), helpers::reduce_to_field(&new.title, 50)));
     }
     msg.channel_id.send_message(ctx, |f| f
         .embed(|e| e
@@ -192,7 +192,7 @@ async fn event_detail(ctx: &Context, msg: &Message, mut args: Args) -> CommandRe
                         e
                             .color(Color::from(severity))
                             .title(format!("{}: {}", String::from(severity), helpers::reduce_to_field(&report.title, 200)))
-                            .description(format!("```{}```", &report.message));
+                            .description(format!("```{}```", helpers::reduce_to_field(&report.message, 2000)));
                         if let Some(stack) = report.stacktrace.as_ref() {
                             e.field("Stacktrace:", format!("```{}```", helpers::reduce_to_field(stack, 1018)), false);
                         }

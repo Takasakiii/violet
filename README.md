@@ -21,7 +21,7 @@ Violet é um pequeno e simples monitorador de aplicação, voltado para receber 
 
 ### Dependencias:
 - [Rust Compiler e Cargo](http://rustlang.org/)
-- openssl e libssl-dev (Para linux apenas)
+- openssl, libssl-dev e curl (Para linux apenas)
 - [MariaDB 10.3](https://mariadb.org/)
 
 ### Processo:

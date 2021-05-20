@@ -1,7 +1,7 @@
 pub mod dtos;
 use actix_web::{App, HttpRequest, HttpResponse, HttpServer, middleware, post, web};
 
-use crate::{channels::GerChannels, mysql_db::{AppTable, ReportsTable}};
+use crate::{channels::Channel, mysql_db::{AppTable, ReportsTable}};
 
 
 #[actix_web::main]
@@ -54,11 +54,8 @@ where
         return Err("Token invalido para essa aplicação.".into());
     }
 
-    GerChannels::get(|g| {
-        g.get_channel("send_app_event", |c| {
-            c.send_data((app_data_finded.clone(), content.clone()))
-        })
-    })?;
+    let channel = Channel::get();
+    channel.send((app_data_finded.clone(), content.clone()))?;
 
     let report = ReportsTable::insert(content.severity.into(), &content.title, &content.message, &content.stacktrace, app_data_finded.id)?;
     callback(report);

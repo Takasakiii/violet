@@ -8,18 +8,15 @@ pub mod channels;
 
 use dotenv::dotenv;
 
+#[macro_use]
+extern crate lazy_static;
+
 pub type GenericError = Box<dyn std::error::Error + Send + Sync>;
 
 #[tokio::main]
 async fn main() {
     dotenv()
         .ok();
-
-    channels::GerChannels::get(|g| {
-        g.create_channel("send_app_event");
-        Ok(())
-    })
-        .expect("Falha ao criar os canais");
 
     std::env::set_var("RUST_LOG", "actix_web=info");
     env_logger::init();
