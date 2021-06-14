@@ -34,27 +34,25 @@ async fn help(ctx: &Context, msg: &Message, mut args: Args, _help_options: &'sta
     if args.is_empty() {
         let mut embed_send = CreateEmbed::default();
         embed_send.color(colors::VIOLET);
-        if args.is_empty() {
-            embed_send.title("**Meus comandos:**")
-                .description(format!("Sou Violet estou aqui para ajudar meus criadores e até mesmo você com logs e reports de bugs nas aplicações.\n\nMeu prefixo é: `{}`, e abaixo você pode encontrar a lista de meus comandos:", config::get_bot_prefix()))
-                .field("Ajuda ⁉:", format!("`{}help`", &prefix), false)
-                .footer(|f| f
-                    .text(format!("Use {}help {{nome do comando}} para mais ajuda sobre o mesmo", &prefix))
-                );
+        embed_send.title("**Meus comandos:**")
+            .description(format!("Sou Violet estou aqui para ajudar meus criadores e até mesmo você com logs e reports de bugs nas aplicações.\n\nMeu prefixo é: `{}`, e abaixo você pode encontrar a lista de meus comandos:", config::get_bot_prefix()))
+            .field("Ajuda ⁉:", format!("`{}help`", &prefix), false)
+            .footer(|f| f
+                .text(format!("Use {}help {{nome do comando}} para mais ajuda sobre o mesmo", &prefix))
+            );
 
-            for group in groups.iter() {
-                let name_module = format!("{}:", group.name);
-                let cmds = group.options.commands
-                    .iter()
-                    .map(|el| {
-                        el.options.names
-                            .first()
-                            .map(|el| el.to_string())
-                            .unwrap()
-                    })
-                    .fold("".to_string(), |ini, new| format!("{} `{}`", ini, new));
-                embed_send.field(name_module, cmds, false);
-            }
+        for group in groups.iter() {
+            let name_module = format!("{}:", group.name);
+            let cmds = group.options.commands
+                .iter()
+                .map(|el| {
+                    el.options.names
+                        .first()
+                        .map(|el| el.to_string())
+                        .unwrap()
+                })
+                .fold("".to_string(), |ini, new| format!("{} `{}`", ini, new));
+            embed_send.field(name_module, cmds, false);
         }
 
         msg.channel_id.send_message(ctx, |f| f
