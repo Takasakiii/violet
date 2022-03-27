@@ -1,9 +1,15 @@
 mod config;
+mod controllers;
 mod database;
 
 use std::io;
 
-use actix_web::{middleware::Logger, App, HttpServer};
+use actix_web::{
+    error::InternalError,
+    middleware::Logger,
+    web::{Data, JsonConfig},
+    App, HttpResponse, HttpServer,
+};
 use config::Config;
 use database::Database;
 use env_logger::Env;
@@ -17,8 +23,26 @@ async fn main() -> io::Result<()> {
     let database = Database::new(&config).await;
     database.migrate().await;
 
-    HttpServer::new(|| App::new().wrap(Logger::default()))
-        .bind(("0.0.0.0", config.server_port))?
-        .run()
-        .await
+    let database_data = Data::new(database);
+
+    HttpServer::new(move || {
+        App::new()
+            .app_data(JsonConfig::default().error_handler(|err, _req| {
+                InternalError::from_response(
+                    "",
+                    HttpResponse::BadRequest()
+                        .content_type("application/json")
+                        .json(serde_json::json!({
+                            "error": err.to_string()
+                        })),
+                )
+                .into()
+            }))
+            .app_data(database_data.clone())
+            .wrap(Logger::default())
+            .service(controllers::auth_routes())
+    })
+    .bind(("0.0.0.0", config.server_port))?
+    .run()
+    .await
 }
