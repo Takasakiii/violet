@@ -1,8 +1,10 @@
+pub mod users;
+
 use std::time::Duration;
 
 use actix_web::rt::time;
 use sqlx::{
-    mysql::{MySql, MySqlPoolOptions},
+    mysql::{MySql, MySqlDatabaseError, MySqlPoolOptions},
     Pool,
 };
 
@@ -44,7 +46,20 @@ impl Database {
         log::info!("Migrated database");
     }
 
-    pub(self) async fn get_pool(&self) -> &Pool<MySql> {
+    pub(self) fn get_pool(&self) -> &Pool<MySql> {
         &self.pool
+    }
+}
+
+pub(crate) trait SqlxErrorExtension {
+    fn get_mysql(&self) -> &MySqlDatabaseError;
+}
+
+impl SqlxErrorExtension for sqlx::Error {
+    fn get_mysql(&self) -> &MySqlDatabaseError {
+        match self {
+            sqlx::Error::Database(err) => err.downcast_ref::<MySqlDatabaseError>(),
+            _ => panic!("Unexpected error type"),
+        }
     }
 }
