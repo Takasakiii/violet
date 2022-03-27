@@ -1,26 +1,9 @@
 [package]
 name = "violet"
-version = "0.1.0"
+version = "0.2.0-alpha"
 authors = ["Takasakiii <lucasmc2709@live.com>"]
-edition = "2018"
+edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-actix-web = "^3.3.2"
-serde = {version = "^1.0.125", features = ["derive"]}
-mysql = "^20.1.0"
-dotenv = "^0.15.0"
-tokio = {version = "^1.5.0", features = ["macros", "rt-multi-thread"]}
-serenity = {version = "^0.10.5", features = ["collector"]}
-env_logger = "^0.8.3"
-regex = "^1.5.4"
-jwt = "^0.13.0"
-hmac = "^0.10.1"
-sha2 = "^0.9.5"
-chrono = "^0.4.19"
-serde_repr = "^0.1.7"
-isahc = "^1.4.0"
-serde_json = "^1.0.64"
-lazy_static = "^1.4.0"
-futures = "^0.3.15"

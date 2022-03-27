@@ -1,5 +1,1 @@
-/target
-.env
-database.env
-.vscode
-main.env
+target/
