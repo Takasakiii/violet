@@ -36,10 +36,12 @@ impl Database {
     }
 
     pub async fn migrate(&self) {
+        log::info!("Migrating database");
         sqlx::migrate!()
             .run(&self.pool)
             .await
             .expect("Failed to migrate database");
+        log::info!("Migrated database");
     }
 
     pub(self) async fn get_pool(&self) -> &Pool<MySql> {
