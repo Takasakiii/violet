@@ -1,9 +1,8 @@
 -- Add migration script here
 create table users (
     username varchar(255) not null,
-    password_hash varchar(255) not null,
-    salt varchar(255) not null,
-    last_token varchar(255) not null,
+    password varchar(255) not null,
+    last_token varchar(255),
     primary key (username)
 );
 
