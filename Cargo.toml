@@ -12,7 +12,6 @@ sqlx = { version = "0.5.11", features = [
     "runtime-tokio-rustls",
     "mysql",
     "migrate",
-    "macros",
 ] }
 actix-web = "4.0.1"
 log = "0.4.16"
