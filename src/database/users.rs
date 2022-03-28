@@ -78,3 +78,19 @@ pub async fn add_last_token(
 
     Ok(())
 }
+
+pub async fn get_by_token(connection: &Database, token: String) -> Result<Users, sqlx::Error> {
+    let (username, password, token): (String, String, Option<String>) =
+        sqlx::query_as("select * from users where last_token = ?")
+            .bind(token)
+            .fetch_one(connection.get_pool())
+            .await?;
+
+    let user = Users {
+        username,
+        password_hash: password,
+        last_token: token,
+    };
+
+    Ok(user)
+}
