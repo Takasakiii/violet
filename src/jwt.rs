@@ -3,9 +3,10 @@ use serde::{Deserialize, Serialize};
 
 use crate::config::Config;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct JwtClaims {
-    username: String,
+    pub username: String,
+    exp: usize,
 }
 
 pub struct Jwt {
@@ -20,7 +21,10 @@ impl Jwt {
     }
 
     pub fn create_jwt(&self, username: String) -> Result<String, jsonwebtoken::errors::Error> {
-        let claims = JwtClaims { username };
+        let claims = JwtClaims {
+            username,
+            exp: 10000000000,
+        };
         jsonwebtoken::encode(
             &Header::default(),
             &claims,
