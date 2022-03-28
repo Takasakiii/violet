@@ -1,5 +1,5 @@
 use actix_web::{
-    post,
+    get, post,
     web::{Data, Json, ReqData},
     HttpResponse,
 };
@@ -43,6 +43,17 @@ pub async fn create(
 
     match apps::create(&*database, database_dto).await {
         Ok(response) => HttpResponse::Created().json(response),
+        Err(err) => {
+            log::error!("{}", err);
+            HttpResponse::InternalServerError().finish()
+        }
+    }
+}
+
+#[get("")]
+pub async fn list(user: ReqData<JwtClaims>, database: Data<Database>) -> HttpResponse {
+    match apps::list(&*database, &user.username).await {
+        Ok(response) => HttpResponse::Ok().json(response),
         Err(err) => {
             log::error!("{}", err);
             HttpResponse::InternalServerError().finish()

@@ -50,7 +50,7 @@ pub async fn sing_up(sing_up: Json<SingUpDto>, database: Data<Database>) -> Http
 
     let db_request = Users {
         username: sing_up.username,
-        password_hash: password,
+        password,
         last_token: None,
     };
 
@@ -93,7 +93,7 @@ pub async fn login(
         }
     };
 
-    match bcrypt::verify(login.password, &user.password_hash) {
+    match bcrypt::verify(login.password, &user.password) {
         Ok(true) => {
             let token = jwt.create_jwt(user.username.clone());
             let token = match token {

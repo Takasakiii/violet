@@ -11,7 +11,7 @@ pub enum UsersErrors {
 #[derive(FromRow)]
 pub struct Users {
     pub username: String,
-    pub password_hash: String,
+    pub password: String,
     pub last_token: Option<String>,
 }
 
@@ -23,7 +23,7 @@ pub struct UsersDtoResult {
 pub async fn create(connection: &Database, user: Users) -> Result<UsersDtoResult, UsersErrors> {
     let result = sqlx::query("insert into users (username, password, last_token) values (?, ?, ?)")
         .bind(user.username.clone())
-        .bind(user.password_hash)
+        .bind(user.password)
         .bind(user.last_token)
         .execute(connection.get_pool())
         .await;
