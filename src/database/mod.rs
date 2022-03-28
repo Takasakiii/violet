@@ -1,4 +1,5 @@
 pub mod users;
+pub mod apps;
 
 use std::time::Duration;
 

@@ -14,5 +14,5 @@ pub fn auth_routes() -> Scope {
 pub fn apps_routes() -> impl HttpServiceFactory {
     web::scope("/apps")
         .wrap(Authentication)
-        .service(apps::index)
+        .service(apps::create)
 }
