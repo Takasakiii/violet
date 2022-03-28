@@ -1,6 +1,7 @@
 mod config;
 mod controllers;
 mod database;
+mod jwt;
 
 use std::io;
 
@@ -13,6 +14,7 @@ use actix_web::{
 use config::Config;
 use database::Database;
 use env_logger::Env;
+use jwt::Jwt;
 
 #[tokio::main]
 async fn main() -> io::Result<()> {
@@ -24,6 +26,7 @@ async fn main() -> io::Result<()> {
     database.migrate().await;
 
     let database_data = Data::new(database);
+    let jwt = Data::new(Jwt::new(&config));
 
     HttpServer::new(move || {
         App::new()
@@ -39,6 +42,7 @@ async fn main() -> io::Result<()> {
                 .into()
             }))
             .app_data(database_data.clone())
+            .app_data(jwt.clone())
             .wrap(Logger::default())
             .service(controllers::auth_routes())
     })
