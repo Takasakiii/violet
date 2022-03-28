@@ -1,4 +1,5 @@
 use serde::Serialize;
+use sqlx::FromRow;
 
 use super::Database;
 
@@ -7,7 +8,7 @@ pub struct AppsDto {
     pub owner: String,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, FromRow)]
 pub struct Apps {
     pub id: i32,
     pub name: String,
@@ -30,4 +31,13 @@ pub async fn create(connection: &Database, app: AppsDto) -> Result<Apps, sqlx::E
     };
 
     Ok(app)
+}
+
+pub async fn list(connection: &Database, owner: &str) -> Result<Vec<Apps>, sqlx::Error> {
+    let apps: Vec<Apps> = sqlx::query_as("select id, name, owner from apps where owner = ?")
+        .bind(owner)
+        .fetch_all(connection.get_pool())
+        .await?;
+
+    Ok(apps)
 }
