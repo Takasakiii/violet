@@ -6,6 +6,7 @@ mod jwt;
 
 use std::io;
 
+use actix_cors::Cors;
 use actix_web::{
     error::InternalError,
     middleware::Logger,
@@ -46,6 +47,12 @@ async fn main() -> io::Result<()> {
             .app_data(database_data.clone())
             .app_data(jwt.clone())
             .wrap(Logger::default())
+            .wrap(
+                Cors::default()
+                    .allow_any_origin()
+                    .allow_any_method()
+                    .allow_any_header(),
+            )
             .service(controllers::auth_routes())
             .service(controllers::apps_routes())
     })
