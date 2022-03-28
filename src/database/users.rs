@@ -36,3 +36,45 @@ pub async fn create(connection: &Database, user: Users) -> Result<UsersDtoResult
         Err(err) => Err(UsersErrors::Generic(err)),
     }
 }
+
+pub enum UsersGetByUsernameErrors {
+    NotFound,
+    Generic(sqlx::Error),
+}
+
+pub async fn get_by_username(
+    connection: &Database,
+    username: String,
+) -> Result<Users, UsersGetByUsernameErrors> {
+    let result: (String, String, Option<String>) =
+        sqlx::query_as("select * from users where username = ?")
+            .bind(username)
+            .fetch_one(connection.get_pool())
+            .await
+            .map_err(|err| match err {
+                sqlx::Error::RowNotFound => UsersGetByUsernameErrors::NotFound,
+                err => UsersGetByUsernameErrors::Generic(err),
+            })?;
+
+    let user = Users {
+        username: result.0,
+        password_hash: result.1,
+        last_token: result.2,
+    };
+
+    Ok(user)
+}
+
+pub async fn add_last_token(
+    connection: &Database,
+    last_token: String,
+    username: String,
+) -> Result<(), sqlx::Error> {
+    sqlx::query("update users set last_token = ? where username = ?")
+        .bind(last_token)
+        .bind(username)
+        .execute(connection.get_pool())
+        .await?;
+
+    Ok(())
+}
