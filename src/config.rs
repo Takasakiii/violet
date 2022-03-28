@@ -8,6 +8,7 @@ use serde::Deserialize;
 pub struct Config {
     pub server_port: u16,
     pub database_url: String,
+    pub jwt_secret: String,
 }
 
 impl Default for Config {
@@ -15,6 +16,7 @@ impl Default for Config {
         Self {
             server_port: 3000,
             database_url: String::from("mysql://root:root@localhost:3306/violet"),
+            jwt_secret: String::from("please-change-me"),
         }
     }
 }
