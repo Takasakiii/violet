@@ -16,4 +16,5 @@ pub fn apps_routes() -> impl HttpServiceFactory {
         .wrap(Authentication)
         .service(apps::create)
         .service(apps::list)
+        .service(apps::update)
 }

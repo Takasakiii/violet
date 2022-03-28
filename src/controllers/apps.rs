@@ -1,6 +1,6 @@
 use actix_web::{
-    get, post,
-    web::{Data, Json, ReqData},
+    get, post, put,
+    web::{Data, Json, Path, ReqData},
     HttpResponse,
 };
 use serde::Deserialize;
@@ -8,7 +8,7 @@ use validator::Validate;
 
 use crate::{
     database::{
-        apps::{self, AppsDto},
+        apps::{self, Apps, AppsDto, AppsUpdateError},
         Database,
     },
     jwt::JwtClaims,
@@ -55,6 +55,36 @@ pub async fn list(user: ReqData<JwtClaims>, database: Data<Database>) -> HttpRes
     match apps::list(&*database, &user.username).await {
         Ok(response) => HttpResponse::Ok().json(response),
         Err(err) => {
+            log::error!("{}", err);
+            HttpResponse::InternalServerError().finish()
+        }
+    }
+}
+
+#[put("/{id}")]
+pub async fn update(
+    user: ReqData<JwtClaims>,
+    id: Path<(i32,)>,
+    database: Data<Database>,
+    app: Json<AppDto>,
+) -> HttpResponse {
+    let id = id.into_inner().0;
+    let app = app.into_inner();
+
+    if let Err(e) = app.validate() {
+        return HttpResponse::UnprocessableEntity().json(e);
+    }
+
+    let app_dto = Apps {
+        id,
+        name: app.name,
+        owner: user.username.clone(),
+    };
+
+    match apps::update(&*database, app_dto).await {
+        Ok(response) => HttpResponse::Ok().json(response),
+        Err(AppsUpdateError::NotFound) => HttpResponse::NotFound().finish(),
+        Err(AppsUpdateError::Generic(err)) => {
             log::error!("{}", err);
             HttpResponse::InternalServerError().finish()
         }

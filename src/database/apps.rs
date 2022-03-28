@@ -41,3 +41,24 @@ pub async fn list(connection: &Database, owner: &str) -> Result<Vec<Apps>, sqlx:
 
     Ok(apps)
 }
+
+pub enum AppsUpdateError {
+    NotFound,
+    Generic(sqlx::Error),
+}
+
+pub async fn update(connection: &Database, app: Apps) -> Result<Apps, AppsUpdateError> {
+    let response = sqlx::query("update apps set name = ? where id = ? and owner = ?")
+        .bind(&app.name)
+        .bind(&app.id)
+        .bind(&app.owner)
+        .execute(connection.get_pool())
+        .await
+        .map_err(AppsUpdateError::Generic)?;
+
+    if response.rows_affected() == 0 {
+        return Err(AppsUpdateError::NotFound);
+    }
+
+    Ok(app)
+}
