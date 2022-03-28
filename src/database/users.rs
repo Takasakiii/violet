@@ -1,4 +1,5 @@
 use serde::Serialize;
+use sqlx::FromRow;
 
 use super::{Database, SqlxErrorExtension};
 
@@ -7,6 +8,7 @@ pub enum UsersErrors {
     Generic(sqlx::Error),
 }
 
+#[derive(FromRow)]
 pub struct Users {
     pub username: String,
     pub password_hash: String,
@@ -46,23 +48,16 @@ pub async fn get_by_username(
     connection: &Database,
     username: String,
 ) -> Result<Users, UsersGetByUsernameErrors> {
-    let result: (String, String, Option<String>) =
-        sqlx::query_as("select * from users where username = ?")
-            .bind(username)
-            .fetch_one(connection.get_pool())
-            .await
-            .map_err(|err| match err {
-                sqlx::Error::RowNotFound => UsersGetByUsernameErrors::NotFound,
-                err => UsersGetByUsernameErrors::Generic(err),
-            })?;
+    let result: Users = sqlx::query_as("select * from users where username = ?")
+        .bind(username)
+        .fetch_one(connection.get_pool())
+        .await
+        .map_err(|err| match err {
+            sqlx::Error::RowNotFound => UsersGetByUsernameErrors::NotFound,
+            err => UsersGetByUsernameErrors::Generic(err),
+        })?;
 
-    let user = Users {
-        username: result.0,
-        password_hash: result.1,
-        last_token: result.2,
-    };
-
-    Ok(user)
+    Ok(result)
 }
 
 pub async fn add_last_token(
@@ -80,17 +75,10 @@ pub async fn add_last_token(
 }
 
 pub async fn get_by_token(connection: &Database, token: String) -> Result<Users, sqlx::Error> {
-    let (username, password, token): (String, String, Option<String>) =
-        sqlx::query_as("select * from users where last_token = ?")
-            .bind(token)
-            .fetch_one(connection.get_pool())
-            .await?;
-
-    let user = Users {
-        username,
-        password_hash: password,
-        last_token: token,
-    };
+    let user: Users = sqlx::query_as("select * from users where last_token = ?")
+        .bind(token)
+        .fetch_one(connection.get_pool())
+        .await?;
 
     Ok(user)
 }
