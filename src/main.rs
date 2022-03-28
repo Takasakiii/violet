@@ -1,3 +1,4 @@
+mod authentication_middleware;
 mod config;
 mod controllers;
 mod database;
@@ -11,6 +12,7 @@ use actix_web::{
     web::{Data, JsonConfig},
     App, HttpResponse, HttpServer,
 };
+
 use config::Config;
 use database::Database;
 use env_logger::Env;
@@ -45,6 +47,7 @@ async fn main() -> io::Result<()> {
             .app_data(jwt.clone())
             .wrap(Logger::default())
             .service(controllers::auth_routes())
+            .service(controllers::apps_routes())
     })
     .bind(("0.0.0.0", config.server_port))?
     .run()
