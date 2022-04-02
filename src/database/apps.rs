@@ -62,3 +62,22 @@ pub async fn update(connection: &Database, app: Apps) -> Result<Apps, AppsUpdate
 
     Ok(app)
 }
+
+pub enum AppGetError {
+    NotFound,
+    Generic(sqlx::Error),
+}
+
+pub async fn get(connection: &Database, id: i32, owner: &str) -> Result<Apps, AppGetError> {
+    let app: Apps = sqlx::query_as("select id, name, owner from apps where id = ? and owner = ?")
+        .bind(id)
+        .bind(owner)
+        .fetch_one(connection.get_pool())
+        .await
+        .map_err(|err| match err {
+            sqlx::Error::RowNotFound => AppGetError::NotFound,
+            err => AppGetError::Generic(err),
+        })?;
+
+    Ok(app)
+}
