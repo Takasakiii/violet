@@ -1,5 +1,6 @@
-pub mod users;
+pub mod app_tokens;
 pub mod apps;
+pub mod users;
 
 use std::time::Duration;
 
