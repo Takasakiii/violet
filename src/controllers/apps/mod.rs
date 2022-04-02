@@ -1,3 +1,5 @@
+pub mod tokens;
+
 use actix_web::{
     get, post, put,
     web::{Data, Json, Path, ReqData},
