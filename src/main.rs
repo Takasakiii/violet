@@ -3,6 +3,7 @@ mod config;
 mod controllers;
 mod database;
 mod jwt;
+mod tokens;
 
 use std::io;
 
