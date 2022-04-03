@@ -1,6 +1,6 @@
 use actix_web::{
-    post,
-    web::{Data, Json, Path, ReqData},
+    get, post,
+    web::{Data, Json, Path, Query, ReqData},
     HttpResponse,
 };
 use serde::Deserialize;
@@ -8,7 +8,7 @@ use validator::Validate;
 
 use crate::{
     database::{
-        app_tokens::{self, AppCreateError, AppTokens},
+        app_tokens::{self, AppTokenError, AppTokens},
         Database,
     },
     jwt::JwtClaims,
@@ -20,6 +20,11 @@ pub struct AppTokensDto {
     permit_cors: bool,
     #[validate(length(max = 255, message = "Subapp name must be less than 255 characters"))]
     subapp_name: Option<String>,
+}
+
+#[derive(Deserialize)]
+pub struct AppTokensListQuery {
+    subapp: Option<String>,
 }
 
 #[post("/{id}/tokens")]
@@ -52,8 +57,29 @@ pub async fn create(
 
     match app_tokens::create(&*database, app_token_db_dto, &owner.username).await {
         Ok(token) => HttpResponse::Created().json(token),
-        Err(AppCreateError::AppNotFound) => HttpResponse::Unauthorized().finish(),
-        Err(AppCreateError::GenericError(err)) => {
+        Err(AppTokenError::AppNotFound) => HttpResponse::Unauthorized().finish(),
+        Err(AppTokenError::GenericError(err)) => {
+            log::error!("{}", err);
+            HttpResponse::InternalServerError().finish()
+        }
+    }
+}
+
+#[get("/{id}/tokens")]
+pub async fn list(
+    path: Path<(i32,)>,
+    auth: ReqData<JwtClaims>,
+    database: Data<Database>,
+    query: Query<AppTokensListQuery>,
+) -> HttpResponse {
+    let app_id = path.0;
+
+    println!("{:?}", query.subapp);
+
+    match app_tokens::list(&*database, app_id, &auth.username, query.subapp.as_ref()).await {
+        Ok(tokens) => HttpResponse::Ok().json(tokens),
+        Err(AppTokenError::AppNotFound) => HttpResponse::NotFound().finish(),
+        Err(AppTokenError::GenericError(err)) => {
             log::error!("{}", err);
             HttpResponse::InternalServerError().finish()
         }

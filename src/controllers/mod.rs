@@ -18,4 +18,5 @@ pub fn apps_routes() -> impl HttpServiceFactory {
         .service(apps::list)
         .service(apps::update)
         .service(apps::tokens::create)
+        .service(apps::tokens::list)
 }
