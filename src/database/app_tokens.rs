@@ -14,17 +14,23 @@ pub struct AppTokens {
     pub subapp_name: Option<String>,
 }
 
-pub enum AppCreateError {
+pub enum AppTokenError {
     AppNotFound,
     GenericError(sqlx::Error),
 }
 
-impl From<AppGetError> for AppCreateError {
+impl From<AppGetError> for AppTokenError {
     fn from(err: AppGetError) -> Self {
         match err {
-            AppGetError::NotFound => AppCreateError::AppNotFound,
-            AppGetError::Generic(err) => AppCreateError::GenericError(err),
+            AppGetError::NotFound => AppTokenError::AppNotFound,
+            AppGetError::Generic(err) => AppTokenError::GenericError(err),
         }
+    }
+}
+
+impl From<sqlx::Error> for AppTokenError {
+    fn from(err: sqlx::Error) -> Self {
+        AppTokenError::GenericError(err)
     }
 }
 
@@ -32,7 +38,7 @@ pub async fn create(
     connection: &Database,
     token: AppTokens,
     owner: &str,
-) -> Result<AppTokens, AppCreateError> {
+) -> Result<AppTokens, AppTokenError> {
     apps::get(connection, token.app_id, owner).await?;
 
     sqlx::query(
@@ -44,7 +50,41 @@ pub async fn create(
     .bind(&token.subapp_name)
     .execute(connection.get_pool())
     .await
-    .map_err(AppCreateError::GenericError)?;
+    .map_err(AppTokenError::GenericError)?;
 
     Ok(token)
+}
+
+fn cut_token(token: &str) -> String {
+    format!("{}...", token.split_at(5).0)
+}
+
+pub async fn list(
+    connection: &Database,
+    app: i32,
+    owner: &str,
+    subapp_name: Option<&String>,
+) -> Result<Vec<AppTokens>, AppTokenError> {
+    apps::get(connection, app, owner).await?;
+
+    let mut tokens: Vec<AppTokens> = if let Some(subapp_name) = subapp_name {
+        sqlx::query_as("select t.* from app_tokens t join apps a on t.app_id = a.id where a.owner = ? and t.subapp_name like ?")
+            .bind(owner)
+            .bind(format!("%{}%", subapp_name))
+            .fetch_all(connection.get_pool())
+            .await?
+    } else {
+        sqlx::query_as(
+            "select t.* from app_tokens t join apps a on a.id = t.app_id where a.owner = ?",
+        )
+        .bind(owner)
+        .fetch_all(connection.get_pool())
+        .await?
+    };
+
+    tokens
+        .iter_mut()
+        .for_each(|t| t.token = cut_token(&t.token));
+
+    Ok(tokens)
 }
