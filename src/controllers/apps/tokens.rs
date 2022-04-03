@@ -74,8 +74,6 @@ pub async fn list(
 ) -> HttpResponse {
     let app_id = path.0;
 
-    println!("{:?}", query.subapp);
-
     match app_tokens::list(&*database, app_id, &auth.username, query.subapp.as_ref()).await {
         Ok(tokens) => HttpResponse::Ok().json(tokens),
         Err(AppTokenError::AppNotFound) => HttpResponse::NotFound().finish(),
