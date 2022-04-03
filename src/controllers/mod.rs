@@ -36,14 +36,7 @@ pub fn errors_routes() -> impl HttpServiceFactory {
         )
         .service(
             web::resource("")
-                .guard(guard::Get())
                 .wrap(Authentication)
                 .route(web::get().to(errors::list)),
         )
 }
-
-// pub fn errors_routes() -> impl HttpServiceFactory {
-//     // web::scope("/errors")
-//     //     .wrap(Authentication)
-//     //     .service(errors::list)
-// }
