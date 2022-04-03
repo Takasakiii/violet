@@ -108,3 +108,12 @@ pub async fn check_app_token(
         None => Err(AppTokenError::AppNotFound),
     }
 }
+
+pub async fn get_by_token(database: &Database, token: &str) -> Result<AppTokens, AppTokenError> {
+    let token = sqlx::query_as("select * from app_tokens where token = ?")
+        .bind(token)
+        .fetch_optional(database.get_pool())
+        .await?
+        .ok_or(AppTokenError::Unauthorized)?;
+    Ok(token)
+}
