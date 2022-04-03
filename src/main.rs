@@ -1,4 +1,3 @@
-mod authentication_middleware;
 mod config;
 mod controllers;
 mod database;
@@ -56,6 +55,7 @@ async fn main() -> io::Result<()> {
             )
             .service(controllers::auth_routes())
             .service(controllers::apps_routes())
+            .service(controllers::errors_extern_routes())
     })
     .bind(("0.0.0.0", config.server_port))?
     .run()

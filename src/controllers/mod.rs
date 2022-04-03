@@ -1,9 +1,12 @@
-use actix_web::{dev::HttpServiceFactory, web, Scope};
-
-use crate::authentication_middleware::Authentication;
-
 mod apps;
 mod auth;
+mod authentication_middleware;
+mod errors;
+mod errors_authentication_middleware;
+
+use actix_web::{dev::HttpServiceFactory, web, Scope};
+
+use authentication_middleware::Authentication;
 
 pub fn auth_routes() -> Scope {
     web::scope("/auth")
@@ -19,4 +22,8 @@ pub fn apps_routes() -> impl HttpServiceFactory {
         .service(apps::update)
         .service(apps::tokens::create)
         .service(apps::tokens::list)
+}
+
+pub fn errors_extern_routes() -> impl HttpServiceFactory {
+    web::scope("/errors").service(errors::create)
 }
