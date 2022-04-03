@@ -4,7 +4,7 @@ mod authentication_middleware;
 mod errors;
 mod errors_authentication_middleware;
 
-use actix_web::{dev::HttpServiceFactory, web, Scope};
+use actix_web::{dev::HttpServiceFactory, guard, web, Scope};
 
 use authentication_middleware::Authentication;
 
@@ -26,8 +26,24 @@ pub fn apps_routes() -> impl HttpServiceFactory {
         .service(apps::tokens::list)
 }
 
-pub fn errors_extern_routes() -> impl HttpServiceFactory {
+pub fn errors_routes() -> impl HttpServiceFactory {
     web::scope("/errors")
-        .wrap(ErrorsAuthentication)
-        .service(errors::create)
+        .service(
+            web::resource("")
+                .guard(guard::Post())
+                .wrap(ErrorsAuthentication)
+                .route(web::post().to(errors::create)),
+        )
+        .service(
+            web::resource("")
+                .guard(guard::Get())
+                .wrap(Authentication)
+                .route(web::get().to(errors::list)),
+        )
 }
+
+// pub fn errors_routes() -> impl HttpServiceFactory {
+//     // web::scope("/errors")
+//     //     .wrap(Authentication)
+//     //     .service(errors::list)
+// }

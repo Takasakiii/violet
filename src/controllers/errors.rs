@@ -1,5 +1,5 @@
 use actix_web::{
-    post,
+    get, post,
     web::{Data, Json, ReqData},
     HttpResponse,
 };
@@ -24,7 +24,7 @@ pub struct ErrorsDto {
     stack_trace: Option<String>,
 }
 
-#[post("")]
+// #[post("")]
 pub async fn create(
     database: Data<Database>,
     token: ReqData<ErrorAuthenticationData>,
@@ -55,4 +55,9 @@ pub async fn create(
         Err(ErrorsErros::Unauthorized) => unreachable!(),
         Err(ErrorsErros::NotFound) => unreachable!(),
     }
+}
+
+// #[get("")]
+pub async fn list() -> HttpResponse {
+    HttpResponse::Ok().finish()
 }
