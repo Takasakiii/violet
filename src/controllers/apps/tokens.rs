@@ -62,6 +62,7 @@ pub async fn create(
             log::error!("{}", err);
             HttpResponse::InternalServerError().finish()
         }
+        Err(_) => unreachable!(),
     }
 }
 
@@ -81,5 +82,6 @@ pub async fn list(
             log::error!("{}", err);
             HttpResponse::InternalServerError().finish()
         }
+        Err(_) => unreachable!(),
     }
 }
