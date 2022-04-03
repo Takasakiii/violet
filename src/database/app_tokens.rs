@@ -6,7 +6,7 @@ use super::{
     Database,
 };
 
-#[derive(FromRow, Serialize)]
+#[derive(FromRow, Serialize, Clone)]
 pub struct AppTokens {
     pub token: String,
     pub app_id: i32,
@@ -90,23 +90,14 @@ pub async fn list(
     Ok(tokens)
 }
 
-pub async fn check_app_token(
-    database: &Database,
-    token: &str,
-    app_id: i32,
-) -> Result<(), AppTokenError> {
-    let token_result: Option<(String,)> =
-        sqlx::query_as("select token from app_tokens where app_id = ?")
-            .bind(token)
-            .bind(app_id)
-            .fetch_optional(database.get_pool())
-            .await?;
+pub async fn check_app_token(database: &Database, token: &str) -> Result<i32, AppTokenError> {
+    let token_result: (i32,) = sqlx::query_as("select  app_id from app_tokens where token = ?")
+        .bind(token)
+        .fetch_optional(database.get_pool())
+        .await?
+        .ok_or(AppTokenError::Unauthorized)?;
 
-    match token_result {
-        Some((token_rec,)) if token == token_rec => Ok(()),
-        Some(_) => Err(AppTokenError::Unauthorized),
-        None => Err(AppTokenError::AppNotFound),
-    }
+    Ok(token_result.0)
 }
 
 pub async fn get_by_token(database: &Database, token: &str) -> Result<AppTokens, AppTokenError> {

@@ -10,6 +10,11 @@ use crate::database::{
     Database,
 };
 
+#[derive(Clone)]
+pub struct ErrorAuthenticationData {
+    pub token: String,
+}
+
 pub struct ErrorsAuthentication;
 
 impl<S, B> Transform<S, ServiceRequest> for ErrorsAuthentication
@@ -55,19 +60,24 @@ where
         let token = req
             .headers()
             .get("Authorization")
-            .map(|header| header.to_owned())
+            .map(|header| {
+                header.to_str().map(|token| {
+                    let token = token.to_owned();
+                    req.extensions_mut().insert(ErrorAuthenticationData {
+                        token: token.clone(),
+                    });
+                    token
+                })
+            })
             .ok_or_else(|| actix_web::error::ErrorUnauthorized("Missing Authorization Header"));
 
         let connection = req.app_data::<Data<Database>>().unwrap().clone();
 
         let process = async move {
-            let token = token?
-                .to_str()
-                .map(|token_str| token_str.to_owned())
-                .map_err(|err| {
-                    log::error!("{}", err);
-                    actix_web::error::ErrorUnauthorized("Invalid Authorization Header")
-                })?;
+            let token = token?.map_err(|err| {
+                log::error!("{}", err);
+                actix_web::error::ErrorUnauthorized("Invalid Authorization Header")
+            })?;
 
             let token_response_db = app_tokens::get_by_token(&*connection, &token)
                 .await
@@ -88,8 +98,8 @@ where
         let fut = self.service.call(req);
 
         Box::pin(async move {
-            let res = fut.await?;
             let token = process.await?;
+            let res = fut.await?;
 
             let cors_header = res.request().headers().get("Sec-Fetch-Mode");
 
@@ -98,8 +108,6 @@ where
                     "CORS is not permitted for this token".to_owned(),
                 ));
             }
-
-            res.request().extensions_mut().insert(token);
             Ok(res)
         })
     }

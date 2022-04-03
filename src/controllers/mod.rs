@@ -8,6 +8,8 @@ use actix_web::{dev::HttpServiceFactory, web, Scope};
 
 use authentication_middleware::Authentication;
 
+use self::errors_authentication_middleware::ErrorsAuthentication;
+
 pub fn auth_routes() -> Scope {
     web::scope("/auth")
         .service(auth::sing_up)
@@ -25,5 +27,7 @@ pub fn apps_routes() -> impl HttpServiceFactory {
 }
 
 pub fn errors_extern_routes() -> impl HttpServiceFactory {
-    web::scope("/errors").service(errors::create)
+    web::scope("/errors")
+        .wrap(ErrorsAuthentication)
+        .service(errors::create)
 }
