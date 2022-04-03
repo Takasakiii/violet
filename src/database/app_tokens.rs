@@ -16,6 +16,7 @@ pub struct AppTokens {
 
 pub enum AppTokenError {
     AppNotFound,
+    Unauthorized,
     GenericError(sqlx::Error),
 }
 
@@ -87,4 +88,23 @@ pub async fn list(
         .for_each(|t| t.token = cut_token(&t.token));
 
     Ok(tokens)
+}
+
+pub async fn check_app_token(
+    database: &Database,
+    token: &str,
+    app_id: i32,
+) -> Result<(), AppTokenError> {
+    let token_result: Option<(String,)> =
+        sqlx::query_as("select token from app_tokens where app_id = ?")
+            .bind(token)
+            .bind(app_id)
+            .fetch_optional(database.get_pool())
+            .await?;
+
+    match token_result {
+        Some((token_rec,)) if token == token_rec => Ok(()),
+        Some(_) => Err(AppTokenError::Unauthorized),
+        None => Err(AppTokenError::AppNotFound),
+    }
 }
