@@ -1,5 +1,14 @@
-use actix_web::dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform};
+use actix_web::{
+    dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform},
+    web::Data,
+    HttpMessage,
+};
 use futures::future::{ok, LocalBoxFuture, Ready};
+
+use crate::database::{
+    app_tokens::{self, AppTokenError, AppTokens},
+    Database,
+};
 
 pub struct ErrorsAuthentication;
 
@@ -43,6 +52,55 @@ where
     forward_ready!(service);
 
     fn call(&self, req: ServiceRequest) -> Self::Future {
-        todo!()
+        let token = req
+            .headers()
+            .get("Authorization")
+            .map(|header| header.to_owned())
+            .ok_or_else(|| actix_web::error::ErrorUnauthorized("Missing Authorization Header"));
+
+        let connection = req.app_data::<Data<Database>>().unwrap().clone();
+
+        let process = async move {
+            let token = token?
+                .to_str()
+                .map(|token_str| token_str.to_owned())
+                .map_err(|err| {
+                    log::error!("{}", err);
+                    actix_web::error::ErrorUnauthorized("Invalid Authorization Header")
+                })?;
+
+            let token_response_db = app_tokens::get_by_token(&*connection, &token)
+                .await
+                .map_err(|err| match err {
+                    AppTokenError::Unauthorized => {
+                        actix_web::error::ErrorUnauthorized("Invalid Token")
+                    }
+                    AppTokenError::GenericError(err) => {
+                        log::error!("{}", err);
+                        actix_web::error::ErrorInternalServerError("Internal Server Error")
+                    }
+                    AppTokenError::AppNotFound => unreachable!(),
+                })?;
+
+            Ok(token_response_db) as Result<AppTokens, actix_web::Error>
+        };
+
+        let fut = self.service.call(req);
+
+        Box::pin(async move {
+            let res = fut.await?;
+            let token = process.await?;
+
+            let cors_header = res.request().headers().get("Sec-Fetch-Mode");
+
+            if cors_header.is_some() && !token.permit_cors {
+                return Err(actix_web::error::ErrorUnauthorized(
+                    "CORS is not permitted for this token".to_owned(),
+                ));
+            }
+
+            res.request().extensions_mut().insert(token);
+            Ok(res)
+        })
     }
 }
