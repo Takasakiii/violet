@@ -1,5 +1,6 @@
 pub mod app_tokens;
 pub mod apps;
+pub mod errors;
 pub mod users;
 
 use std::time::Duration;
