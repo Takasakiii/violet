@@ -24,19 +24,19 @@ pub fn apps_routes() -> impl HttpServiceFactory {
         .service(apps::update)
         .service(apps::tokens::create)
         .service(apps::tokens::list)
+        .service(apps::errors::list)
 }
 
 pub fn errors_routes() -> impl HttpServiceFactory {
-    web::scope("/errors")
-        .service(
-            web::resource("")
-                .guard(guard::Post())
-                .wrap(ErrorsAuthentication)
-                .route(web::post().to(errors::create)),
-        )
-        .service(
-            web::resource("")
-                .wrap(Authentication)
-                .route(web::get().to(errors::list)),
-        )
+    web::scope("/errors").service(
+        web::resource("")
+            .guard(guard::Post())
+            .wrap(ErrorsAuthentication)
+            .route(web::post().to(errors::create)),
+    )
+    // .service(
+    //     web::resource("")
+    //         .wrap(Authentication)
+    //         .route(web::get().to(errors::list)),
+    // )
 }

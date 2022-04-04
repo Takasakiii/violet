@@ -52,9 +52,6 @@ pub async fn create(
         }
         Err(ErrorsErros::Unauthorized) => unreachable!(),
         Err(ErrorsErros::NotFound) => unreachable!(),
+        Err(ErrorsErros::QueryError) => unreachable!(),
     }
-}
-
-pub async fn list() -> HttpResponse {
-    HttpResponse::Ok().finish()
 }
