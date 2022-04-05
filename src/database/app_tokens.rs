@@ -69,16 +69,18 @@ pub async fn list(
     apps::get(connection, app, owner).await?;
 
     let mut tokens: Vec<AppTokens> = if let Some(subapp_name) = subapp_name {
-        sqlx::query_as("select t.* from app_tokens t join apps a on t.app_id = a.id where a.owner = ? and t.subapp_name like ?")
-            .bind(owner)
+        sqlx::query_as("select t.* from app_tokens t join apps a on t.app_id = a.id where t.app_id = ? and a.owner = ? and t.subapp_name like ?")
+        .bind(app)    
+        .bind(owner)
             .bind(format!("%{}%", subapp_name))
             .fetch_all(connection.get_pool())
             .await?
     } else {
         sqlx::query_as(
-            "select t.* from app_tokens t join apps a on a.id = t.app_id where a.owner = ?",
+            "select t.* from app_tokens t join apps a on a.id = t.app_id where a.owner = ? and t.app_id = ?",
         )
         .bind(owner)
+        .bind(app)
         .fetch_all(connection.get_pool())
         .await?
     };
