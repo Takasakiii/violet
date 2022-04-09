@@ -1,8 +1,10 @@
 mod apps;
 mod auth;
+mod authentication_extractor;
 mod authentication_middleware;
 mod errors;
 mod errors_authentication_middleware;
+mod test;
 
 use actix_web::{dev::HttpServiceFactory, guard, web, Scope};
 
@@ -39,4 +41,8 @@ pub fn errors_routes() -> impl HttpServiceFactory {
     //         .wrap(Authentication)
     //         .route(web::get().to(errors::list)),
     // )
+}
+
+pub fn test_routes() -> impl HttpServiceFactory {
+    web::scope("/test").service(test::index)
 }
