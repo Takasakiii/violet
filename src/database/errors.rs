@@ -4,7 +4,7 @@ use sql_builder::{bind::Bind, SqlBuilder};
 use sqlx::FromRow;
 
 use super::{
-    app_tokens::{self, AppTokenError},
+    app_tokens::AppTokenError,
     apps::{self, AppGetError},
     Database,
 };
@@ -61,6 +61,7 @@ pub struct ErrorsWithSubAppName {
 
 pub struct ErrorsCreateDto {
     pub error_level: String,
+    pub app_id: i32,
     pub message: String,
     pub stack_trace: Option<String>,
     pub token: String,
@@ -69,10 +70,8 @@ pub struct ErrorsCreateDto {
 pub async fn create(database: &Database, data: ErrorsCreateDto) -> Result<Errors, ErrorsErros> {
     let now = Utc::now().timestamp();
 
-    let app_id = app_tokens::check_app_token(database, &data.token).await?;
-
     let result = sqlx::query("insert into errors (app_id, error_level, message, stack_trace, token, created_at) values (?, ?, ?, ?, ?, ?)")
-        .bind(app_id)
+        .bind(data.app_id)
         .bind(&data.error_level)
         .bind(&data.message)
         .bind(&data.stack_trace)
@@ -83,7 +82,7 @@ pub async fn create(database: &Database, data: ErrorsCreateDto) -> Result<Errors
 
     let error = Errors {
         id: result.last_insert_id() as i32,
-        app_id,
+        app_id: data.app_id,
         created_at: now as u64,
         error_level: data.error_level,
         message: data.message,

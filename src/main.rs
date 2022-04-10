@@ -1,6 +1,7 @@
 mod config;
 mod controllers;
 mod database;
+mod extractors;
 mod jwt;
 mod tokens;
 

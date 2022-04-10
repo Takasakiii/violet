@@ -1,6 +1,6 @@
 use actix_web::{get, HttpResponse};
 
-use super::authentication_extractor::UserAuthentication;
+use crate::extractors::UserAuthentication;
 
 #[get("")]
 pub async fn index(auth: UserAuthentication) -> HttpResponse {

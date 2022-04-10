@@ -92,15 +92,7 @@ pub async fn list(
     Ok(tokens)
 }
 
-pub async fn check_app_token(database: &Database, token: &str) -> Result<i32, AppTokenError> {
-    let token_result: (i32,) = sqlx::query_as("select  app_id from app_tokens where token = ?")
-        .bind(token)
-        .fetch_optional(database.get_pool())
-        .await?
-        .ok_or(AppTokenError::Unauthorized)?;
 
-    Ok(token_result.0)
-}
 
 pub async fn get_by_token(database: &Database, token: &str) -> Result<AppTokens, AppTokenError> {
     let token = sqlx::query_as("select * from app_tokens where token = ?")
