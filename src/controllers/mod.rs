@@ -1,12 +1,9 @@
 mod apps;
 mod auth;
-mod authentication_middleware;
 mod errors;
 mod test;
 
 use actix_web::{dev::HttpServiceFactory, web, Scope};
-
-use authentication_middleware::Authentication;
 
 pub fn auth_routes() -> Scope {
     web::scope("/auth")
@@ -16,7 +13,6 @@ pub fn auth_routes() -> Scope {
 
 pub fn apps_routes() -> impl HttpServiceFactory {
     web::scope("/apps")
-        .wrap(Authentication)
         .service(apps::create)
         .service(apps::list)
         .service(apps::update)

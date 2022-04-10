@@ -1,6 +1,6 @@
 use actix_web::{
     get, post,
-    web::{Data, Json, Path, Query, ReqData},
+    web::{Data, Json, Path, Query},
     HttpResponse,
 };
 use serde::Deserialize;
@@ -11,7 +11,7 @@ use crate::{
         app_tokens::{self, AppTokenError, AppTokens},
         Database,
     },
-    jwt::JwtClaims,
+    extractors::UserAuthentication,
     tokens,
 };
 
@@ -30,7 +30,7 @@ pub struct AppTokensListQuery {
 #[post("/{id}/tokens")]
 pub async fn create(
     path: Path<(i32,)>,
-    owner: ReqData<JwtClaims>,
+    owner: UserAuthentication,
     form: Json<AppTokensDto>,
     database: Data<Database>,
 ) -> HttpResponse {
@@ -69,7 +69,7 @@ pub async fn create(
 #[get("/{id}/tokens")]
 pub async fn list(
     path: Path<(i32,)>,
-    auth: ReqData<JwtClaims>,
+    auth: UserAuthentication,
     database: Data<Database>,
     query: Query<AppTokensListQuery>,
 ) -> HttpResponse {

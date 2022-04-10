@@ -1,6 +1,6 @@
 use actix_web::{
     get,
-    web::{Data, Path, Query, ReqData},
+    web::{Data, Path, Query},
     HttpResponse,
 };
 use serde::Deserialize;
@@ -10,7 +10,7 @@ use crate::{
         errors::{self, ErrorsErros, ErrorsSearch},
         Database,
     },
-    jwt::JwtClaims,
+    extractors::UserAuthentication,
 };
 
 #[derive(Clone, Deserialize)]
@@ -27,7 +27,7 @@ pub struct ErrorsListQuery {
 pub async fn list(
     path: Path<(i32,)>,
     database: Data<Database>,
-    user: ReqData<JwtClaims>,
+    user: UserAuthentication,
     query: Query<ErrorsListQuery>,
 ) -> HttpResponse {
     let app_id = path.into_inner().0;

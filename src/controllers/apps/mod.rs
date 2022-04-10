@@ -3,7 +3,7 @@ pub mod tokens;
 
 use actix_web::{
     get, post, put,
-    web::{Data, Json, Path, ReqData},
+    web::{Data, Json, Path},
     HttpResponse,
 };
 use serde::Deserialize;
@@ -14,7 +14,7 @@ use crate::{
         apps::{self, Apps, AppsDto, AppsUpdateError},
         Database,
     },
-    jwt::JwtClaims,
+    extractors::UserAuthentication,
 };
 
 #[derive(Deserialize, Validate)]
@@ -29,7 +29,7 @@ pub struct AppDto {
 
 #[post("")]
 pub async fn create(
-    user: ReqData<JwtClaims>,
+    user: UserAuthentication,
     database: Data<Database>,
     app: Json<AppDto>,
 ) -> HttpResponse {
@@ -54,7 +54,7 @@ pub async fn create(
 }
 
 #[get("")]
-pub async fn list(user: ReqData<JwtClaims>, database: Data<Database>) -> HttpResponse {
+pub async fn list(user: UserAuthentication, database: Data<Database>) -> HttpResponse {
     match apps::list(&*database, &user.username).await {
         Ok(response) => HttpResponse::Ok().json(response),
         Err(err) => {
@@ -66,7 +66,7 @@ pub async fn list(user: ReqData<JwtClaims>, database: Data<Database>) -> HttpRes
 
 #[put("/{id}")]
 pub async fn update(
-    user: ReqData<JwtClaims>,
+    user: UserAuthentication,
     id: Path<(i32,)>,
     database: Data<Database>,
     app: Json<AppDto>,
